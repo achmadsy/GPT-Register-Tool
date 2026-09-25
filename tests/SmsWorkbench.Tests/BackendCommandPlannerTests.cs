@@ -420,6 +420,27 @@ public sealed class BackendCommandPlannerTests
     // ── Import ──────────────────────────────────────────────────────────
 
     [Fact]
+    public void CreateLocalSessionImport_UsesRepeatedLocalOnlyFlags()
+    {
+        var plan = BackendCommandPlanner.CreateLocalSessionImport(
+            new[] { "C:\\one.json", "C:\\two.json" });
+
+        Assert.Equal("Import existing sessions", plan.TaskName);
+        Assert.Equal("--desktop-ipc", plan.Arguments[0]);
+        Assert.Equal(2, plan.Arguments.Count(argument => argument == "--import-local-session"));
+        Assert.Contains("C:\\one.json", plan.Arguments);
+        Assert.Contains("C:\\two.json", plan.Arguments);
+        Assert.DoesNotContain("--import-cpa", plan.Arguments);
+    }
+
+    [Fact]
+    public void CreateLocalSessionImport_RejectsEmptyPaths()
+    {
+        Assert.Throws<ArgumentException>(() =>
+            BackendCommandPlanner.CreateLocalSessionImport(Array.Empty<string>()));
+    }
+
+    [Fact]
     public void CreateAccountImport_NormalizesTarget()
     {
         var plan = BackendCommandPlanner.CreateAccountImport(

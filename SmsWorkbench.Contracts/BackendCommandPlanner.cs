@@ -407,6 +407,22 @@ namespace SmsWorkbench
 
         // ── Import ──────────────────────────────────────────────────────
 
+        public static BackendCommandPlan CreateLocalSessionImport(IReadOnlyList<string> paths)
+        {
+            var files = (paths ?? Array.Empty<string>())
+                .Where(path => !string.IsNullOrWhiteSpace(path))
+                .ToList();
+            if (files.Count == 0)
+                throw new ArgumentException("Select at least one session JSON file.", nameof(paths));
+            var args = new List<string> { "--desktop-ipc" };
+            foreach (string file in files)
+            {
+                args.Add("--import-local-session");
+                args.Add(file);
+            }
+            return new BackendCommandPlan("Import existing sessions", args);
+        }
+
         /// <summary>
         /// Batch import from a list of email addresses. Writes a temp email file.
         /// </summary>

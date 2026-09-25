@@ -286,6 +286,14 @@ def main():
     base_dir = args.output_dir or str(output_dir(CFG))
     if _main_early_commands(args):
         return
+    if args.import_local_session:
+        from .accounts.local_session_import import import_local_sessions
+
+        result = import_local_sessions(args.import_local_session, runtime_config=CFG, session_dir=base_dir)
+        emit_result(result, enabled=bool(args.desktop_ipc))
+        if not result["ok"]:
+            raise SystemExit(3)
+        return
     if args.delete_account:
         from .accounts.account_lifecycle import AccountDeleteRequest, AccountLifecycle
         from .commands.helpers import read_email_file, unique_emails

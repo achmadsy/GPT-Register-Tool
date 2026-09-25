@@ -4,6 +4,7 @@ import argparse
 
 
 def register(parser: argparse.ArgumentParser) -> None:
+    parser.add_argument("--import-local-session", action="append", default=[], metavar="JSON", help="Import an existing account session JSON into this computer only; repeat for multiple files")
     parser.add_argument("--refresh-session", action="store_true", help="Refresh ChatGPT auth session with protocol requests")
     parser.add_argument("--session-file", default=None, help="Session JSON path for account and payment operations")
     parser.add_argument("--refresh-timeout", type=int, default=300, help="Seconds to wait for interactive auth refresh")

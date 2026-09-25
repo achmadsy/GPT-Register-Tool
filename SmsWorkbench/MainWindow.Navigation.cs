@@ -24,6 +24,7 @@ namespace SmsWorkbench
                 case "importmail": ImportChataiMailbox_Click(this, new RoutedEventArgs()); break;
                 case "inbox": ViewInbox_Click(this, new RoutedEventArgs()); break;
                 case "changeemail": ChangeEmail_Click(this, new RoutedEventArgs()); break;
+                case "importlocal": ImportExistingSessions_Click(this, new RoutedEventArgs()); break;
                 case "importcpa": ImportPaidCpa_Click(this, new RoutedEventArgs()); break;
                 case "export": ExportAccounts_Click(this, new RoutedEventArgs()); break;
                 case "delete": DeleteSelected_Click(this, new RoutedEventArgs()); break;

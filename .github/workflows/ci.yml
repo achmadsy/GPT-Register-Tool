@@ -73,3 +73,19 @@ jobs:
       - run: python scripts/docs_consistency_scan.py
       - shell: powershell
         run: powershell -ExecutionPolicy Bypass -File .\SmsWorkbench\build_dotnet.ps1
+      - name: Verify publish artifact contains no runtime secrets
+        shell: powershell
+        run: |
+          $forbidden = @('config.json', 'proxy.json', 'runtime.json', 'payment.json', 'mailbox_tokens.txt', 'kyl_state.json', 'accounts.sqlite3')
+          $found = Get-ChildItem -Path .\dist\net10 -Recurse -File | Where-Object { $forbidden -contains $_.Name -or $_.FullName -match '\\sessions(\\|$)|\\runtime(\\|$)' }
+          if ($found) {
+            $found | ForEach-Object { Write-Error "Sensitive runtime file in publish output: $($_.FullName)" }
+            exit 1
+          }
+      - name: Upload Windows desktop artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: SmsWorkbench-win-x64
+          path: dist/net10
+          if-no-files-found: error
+          retention-days: 14

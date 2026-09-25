@@ -113,6 +113,37 @@ The Chinese README contains the complete feature, configuration, architecture, C
 - [Directory map](./docs/directory-map.md)
 - [Proxy guide](./PROXY_GUIDE.md)
 
+## English onboarding: account and mailbox imports
+
+**Import Session JSON (Local)** is for existing OpenAI account session files you already own. Select one or more JSON files from **Account Management**. The tool validates an email plus an access, refresh, or session token, then stores accepted data in the local `sessions/` directory and the SQLite index. Existing email records are skipped. This path does not log in, register, refresh, or send data to another service.
+
+Common accepted shapes:
+
+```json
+{"email":"account@example.com","access_token":"..."}
+```
+
+```json
+{"auth_session":{"user":{"email":"account@example.com"},"refreshToken":"..."}}
+```
+
+**Import Mailboxes** is for fresh mailbox credentials used by a new registration. It only adds mailbox-pool rows; start **Register Accounts** separately. Mailbox rows are not OpenAI sessions. Example formats use fake values:
+
+```text
+new-user@example.com---mailbox-password---oauth-refresh-token
+new-user@example.com----mailbox-password----client-id----oauth-refresh-token
+```
+
+Supported provider URLs include `remail://`, `smailr://`, `cfworker://`, `gmail://`, and supported iCloud URL rows. The UI reports imported and skipped counts. Incomplete, duplicate, or unsupported rows are skipped.
+
+**Send Accounts to CPA/SUB2API** is separate. It sends selected local sessions to an external service and asks for confirmation immediately before sending. Cancel when you only need local storage.
+
+Never publish real tokens, passwords, mailbox credentials, proxy credentials, API keys, session files, or runtime databases.
+
+## Windows CI artifact
+
+CI publishes `SmsWorkbench-win-x64` after tests and the canonical publish script complete. The artifact contains application output only, not local configuration, sessions, SQLite data, mailbox tokens, proxy credentials, or API keys. The published app still needs local Python dependencies and local configuration.
+
 ## Data And Responsible Use
 
 Local configuration, mailbox credentials, proxy passwords, API keys, Tokens, Sessions, and runtime data must not be committed or shared publicly. Use this project only with authorization and in compliance with applicable service terms, regional laws, and organizational policies.

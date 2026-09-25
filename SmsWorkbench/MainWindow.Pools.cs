@@ -18,8 +18,8 @@ namespace SmsWorkbench
             string scope = DisplayText(ScopeFilter);
             string term = (SearchText ?? "").Trim().ToLowerInvariant();
 
-            if (scope == "有试用" && !PromotionStatusPresentation.IsTrialEligible(row.PromotionStatus, row.PromotionState)) return false;
-            if (scope == "待处理" && !RegistrationStatusPresentation.NeedsAttention(row)) return false;
+            if (scope == "Trial Eligible" && !PromotionStatusPresentation.IsTrialEligible(row.PromotionStatus, row.PromotionState)) return false;
+            if (scope == "Needs Attention" && !RegistrationStatusPresentation.NeedsAttention(row)) return false;
             if (term.Length == 0) return true;
 
             string text = (row.Identifier + " " + row.AccountType + " " + row.Status + " " + row.Notes).ToLowerInvariant();

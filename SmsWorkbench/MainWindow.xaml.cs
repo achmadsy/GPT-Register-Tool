@@ -29,7 +29,7 @@ namespace SmsWorkbench
         private string searchText = "";
         private string countText = "1";
         private string pageSizeText = "100";
-        private object scopeFilter = "全部";
+        private object scopeFilter = "All";
         // Log accumulation used to be `logText += line` on every backend line,
         // which is a full-string copy per line -- O(n^2) over a run -- and it was
         // never truncated. A StringBuilder gives amortised O(1) appends and
@@ -254,7 +254,7 @@ namespace SmsWorkbench
             ApplyCustomThemeColors(_currentTheme);
             ThemeIconGeometry = _currentTheme == Wpf.Ui.Appearance.ApplicationTheme.Dark ? MoonIcon : SunIcon;
 
-            ScopeFilter = "全部";
+            ScopeFilter = "All";
             RefreshPools();
             ApplySidebarCompact(false);
             Closing += OnWindowClosing;

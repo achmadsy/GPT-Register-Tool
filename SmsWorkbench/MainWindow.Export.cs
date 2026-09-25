@@ -12,10 +12,34 @@ namespace SmsWorkbench
         // backend JSON business interpretation is delegated to
         // BackendResultInterpreter.
 
+        private async void ImportExistingSessions_Click(object sender, RoutedEventArgs e)
+        {
+            var picker = new Microsoft.Win32.OpenFileDialog
+            {
+                Title = "Select existing account session JSON files",
+                Filter = "Session JSON (*.json)|*.json",
+                Multiselect = true
+            };
+            if (picker.ShowDialog() != true) return;
+            var plan = BackendCommandPlanner.CreateLocalSessionImport(picker.FileNames);
+            try
+            {
+                await RunBackendWithResultAsync(plan.TaskName, plan.Arguments.ToList());
+                RefreshPools();
+                ShowThemedInfoDialog("Import complete", "Existing account sessions were imported locally. Select an account to inspect it; importing does not register it again. Check task output for imported/skipped counts.");
+            }
+            catch (Exception ex)
+            {
+                ShowThemedInfoDialog("Import failed", "No account was imported. Check selected JSON files. " + SensitiveDataSanitizer.Redact(ex.Message));
+            }
+        }
+
         private void ImportPaidCpa_Click(object sender, RoutedEventArgs e)
         {
-            string target = ShowImportTargetDialog("一键导入");
+            string target = ShowImportTargetDialog("Send local accounts to CPA/SUB2API");
             if (target.Length == 0) return;
+
+            if (MessageBox.Show("This sends selected local account sessions to an external CPA or SUB2API service. Continue?", "Send accounts externally", MessageBoxButton.YesNo, MessageBoxImage.Warning) != MessageBoxResult.Yes) return;
 
             var selected = SelectedRowsOrCurrent()
                 .Where(IsImportableAccountRow)
@@ -33,7 +57,7 @@ namespace SmsWorkbench
 
             if (rows.Count == 0)
             {
-                MessageBox.Show("没有找到可导入账号。请先注册账号并获得 access_token/session。", "一键导入", MessageBoxButton.OK, MessageBoxImage.Information);
+                MessageBox.Show("No importable accounts found. Register accounts first and obtain an access_token/session.", "Send accounts externally", MessageBoxButton.OK, MessageBoxImage.Information);
                 return;
             }
 
