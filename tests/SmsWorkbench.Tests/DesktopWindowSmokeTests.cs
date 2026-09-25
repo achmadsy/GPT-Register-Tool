@@ -274,13 +274,13 @@ public sealed class DesktopWindowSmokeTests
             Assert.DoesNotContain("注册批次", headers);
             Assert.DoesNotContain("入库", headers);
             DataGridColumn[] equalWidthColumns = accountGrid.Columns
-                .Where(column => new[] { "状态", "AT", "RT", "2FA" }.Contains(column.Header?.ToString() ?? ""))
+                .Where(column => new[] { "Status", "AT", "RT", "2FA" }.Contains(column.Header?.ToString() ?? ""))
                 .ToArray();
             Assert.Equal(4, equalWidthColumns.Length);
             Assert.Single(equalWidthColumns.Select(column => column.Width.Value).Distinct());
             DataGridColumn promotionColumn = Assert.Single(
                 accountGrid.Columns,
-                column => (column.Header?.ToString() ?? "") == "优惠状态");
+                column => (column.Header?.ToString() ?? "") == "Promotion");
             Assert.True(promotionColumn.CanUserSort);
             Assert.Equal("PromotionStatus", promotionColumn.SortMemberPath);
             Assert.DoesNotContain("支付方式", headers);
