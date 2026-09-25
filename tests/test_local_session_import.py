@@ -1,6 +1,8 @@
 import json
 import os
 
+import pytest
+
 from sms_tool.accounts import local_session_import
 
 
@@ -35,7 +37,10 @@ def test_imports_top_level_session_locally_without_echoing_tokens(tmp_path, monk
     assert payload["email"] == "User@example.com"
     assert payload["access_token"] == token
     assert token not in json.dumps(result)
-    assert os.stat(path).st_mode & 0o077 == 0
+    # Windows (NTFS) does not expose POSIX permission bits, so the 0600
+    # chmod in the importer is only observable on POSIX systems.
+    if os.name != "nt":
+        assert os.stat(path).st_mode & 0o077 == 0
 
 
 def test_imports_nested_auth_session_and_deduplicates(tmp_path, monkeypatch):
