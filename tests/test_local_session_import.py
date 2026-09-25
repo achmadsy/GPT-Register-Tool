@@ -1,8 +1,6 @@
 import json
 import os
 
-import pytest
-
 from sms_tool.accounts import local_session_import
 
 
