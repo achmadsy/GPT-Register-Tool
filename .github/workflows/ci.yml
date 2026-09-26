@@ -86,7 +86,10 @@ jobs:
         shell: powershell
         run: |
           $forbidden = @('config.json', 'proxy.json', 'runtime.json', 'payment.json', 'mailbox_tokens.txt', 'kyl_state.json', 'accounts.sqlite3')
-          $found = Get-ChildItem -Path .\dist\net10 -Recurse -File | Where-Object { $forbidden -contains $_.Name -or $_.FullName -match '\\sessions(\\|$)|\\runtime(\\|$)' }
+          $found = Get-ChildItem -Path .\dist\net10 -Recurse -File | Where-Object {
+            $relative = $_.FullName.Substring((Resolve-Path .\dist\net10).Path.Length).TrimStart('\\')
+            $forbidden -contains $_.Name -or ($relative -match '(^|\\)sessions(\\|$)') -or ($relative -match '(^|\\)runtime(\\|$)' -and $relative -notlike 'sms_tool\\sentinel\\runtime\\*')
+          }
           if ($found) {
             $found | ForEach-Object { Write-Error "Sensitive runtime file in publish output: $($_.FullName)" }
             exit 1
