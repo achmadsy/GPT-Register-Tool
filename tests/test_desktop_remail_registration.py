@@ -8,11 +8,11 @@ def test_one_click_registration_uses_requested_provider_labels_and_defaults_to_r
     source = (ROOT / "SmsWorkbench" / "MainWindow.Register.cs").read_text(encoding="utf-8-sig")
 
     expected = [
-        'Content = "ReMail 邮箱", Tag = "remail_target"',
-        'Content = "Smailr 邮箱", Tag = "smailr"',
-        'Content = "Outlook/Hotmail/iCloud 邮箱池", Tag = "pool"',
-        'Content = "CF Worker 域名邮箱", Tag = "cfworker"',
-        'Content = "手机号注册", Tag = "phone"',
+        'Content = "ReMail mailbox", Tag = "remail_target"',
+        'Content = "Smailr mailbox", Tag = "smailr"',
+        'Content = "Outlook/Hotmail/iCloud pool", Tag = "pool"',
+        'Content = "CF Worker domain mailbox", Tag = "cfworker"',
+        'Content = "Phone registration", Tag = "phone"',
     ]
     positions = [source.index(item) for item in expected]
     assert positions == sorted(positions)
@@ -33,7 +33,7 @@ def test_long_term_remail_disables_phone_reuse_by_default():
     assert "BackendCommandPlanner.CreateRemailTargetRegistration(" in remail_branch
     assert "checkPromotion: options.CheckPromotion" in remail_branch
 
-    assert 'Content = "注册完成后查询试用优惠"' in register
+    assert 'Content = "Check trial promotion after registration"' in register
     assert "--check-promotion-after-registration" in planner
 
     # The planner keeps ReMail on purchase mode with phone reuse disabled and
