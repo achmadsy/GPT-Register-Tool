@@ -6,9 +6,9 @@ namespace SmsWorkbench.Tests;
 public sealed class MailboxPoolFileStoreTests
 {
     [Theory]
-    [InlineData(true, "200", "已获取")]
-    [InlineData(true, "401", "401失效")]
-    [InlineData(false, "401", "未获取")]
+    [InlineData(true, "200", "Present")]
+    [InlineData(true, "401", "401 invalid")]
+    [InlineData(false, "401", "Missing")]
     public void AccessTokenDisplayReflectsProbeState(bool hasAccessToken, string statusCode, string expected)
     {
         Assert.Equal(expected, AccessTokenState.Display(hasAccessToken, statusCode));

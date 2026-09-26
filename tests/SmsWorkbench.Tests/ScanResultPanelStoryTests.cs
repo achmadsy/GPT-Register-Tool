@@ -95,7 +95,7 @@ public sealed class ScanResultPanelStoryTests
 
         Assert.Equal("3", total);
         Assert.Contains("── Account check started · 3 accounts ──", panel);
-        Assert.Contains("── Account check finished · Normal 1/3, AT invalid 1, deactivated 1, timed out 0 ──", panel);
+        Assert.Contains("── Account check finished · 正常 1/3，AT失效 1，掉号 1，超时 0 ──", panel);
         Assert.Contains("[!] b@example.com: AT 失效（HTTP 401）", panel);
         // Per-account events must NOT duplicate the Python failure lines.
         Assert.DoesNotContain(panel, l => l.Contains("Account check started") && l.Contains("b@example.com"));
@@ -121,7 +121,7 @@ public sealed class ScanResultPanelStoryTests
 
         Assert.Equal("2", total);
         Assert.Contains("── Promotion check started · 2 accounts ──", panel);
-        Assert.Contains("── Promotion check finished · 2 accounts done, 1 succeeded, 401 1, transport failed 0 ──", panel);
+        Assert.Contains("── Promotion check finished · 完成 2 个账号，成功 1，401 1，传输失败 0 ──", panel);
         Assert.Contains("[!] b@example.com: AT 失效（HTTP 401）", panel);
     }
 
