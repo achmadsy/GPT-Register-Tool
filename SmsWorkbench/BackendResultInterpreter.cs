@@ -234,7 +234,7 @@ public static class BackendResultInterpreter
             .Append("    Other failures: ").Append(failed);
         foreach (KeyValuePair<string, int> badge in badges.OrderByDescending(b => b.Value))
         {
-            text.Append("    ").Append(badge.Key).Append(': ').Append(badge.Value);
+            text.Append("    ").Append(badge.Key).Append(": ").Append(badge.Value);
         }
         return text.ToString();
     }
