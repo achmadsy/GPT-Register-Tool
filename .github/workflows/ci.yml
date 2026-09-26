@@ -87,8 +87,10 @@ jobs:
         run: |
           $forbidden = @('config.json', 'proxy.json', 'runtime.json', 'payment.json', 'mailbox_tokens.txt', 'kyl_state.json', 'accounts.sqlite3')
           $found = Get-ChildItem -Path .\dist\net10 -Recurse -File | Where-Object {
-            $relative = $_.FullName.Substring((Resolve-Path .\dist\net10).Path.Length).TrimStart('\\')
-            $forbidden -contains $_.Name -or ($relative -match '(^|\\)sessions(\\|$)') -or ($relative -match '(^|\\)runtime(\\|$)' -and $relative -notlike 'sms_tool\\sentinel\\runtime\\*')
+            $isSentinelSdk = $_.FullName -like '*\sms_tool\sentinel\runtime\*'
+            $isForbiddenName = $forbidden -contains $_.Name
+            $isSecretDirectory = $_.FullName -match '\\sessions(\\|$)' -or ($_.FullName -match '\\runtime(\\|$)' -and -not $isSentinelSdk)
+            $isForbiddenName -or $isSecretDirectory
           }
           if ($found) {
             $found | ForEach-Object { Write-Error "Sensitive runtime file in publish output: $($_.FullName)" }
