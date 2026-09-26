@@ -345,7 +345,7 @@ def _handle_job(job: dict[str, Any]) -> AccountHealthResult:
         if not probe:
             probe = {
                 "ok": False,
-                "promotion_status": "检测失败",
+                "promotion_status": "Check failed",
                 "error": str(report.get("error") or "plan_check_failed")[:300],
             }
         result = plan_health_result(email, probe)

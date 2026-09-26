@@ -328,7 +328,7 @@ def _print_promotion_summary(result):
     results = result.get("results") if isinstance(result.get("results"), list) else []
     rows = [item for item in results if isinstance(item, dict)]
     ok = sum(1 for item in rows if item.get("ok"))
-    print(f"[*] 优惠检测完成：共 {len(rows)} 个账号，检测成功 {ok}，失败 {len(rows) - ok}")
+    print(f"[*] Promotion check done: {len(rows)} accounts, {ok} probe succeeded, {len(rows) - ok} failed")
     logger.info("promotion check finished: ok=%s/%s", ok, len(rows))
     # Payment eligibility rides along with the promotion probe; report it on its
     # own line so "promotion failed" and "rail list unknown" stay separable.
@@ -336,11 +336,11 @@ def _print_promotion_summary(result):
     if eligibility_rows:
         eligibility_ok = sum(1 for item in eligibility_rows if item["payment_capability"].get("ok"))
         methods = result.get("payment_methods_seen")
-        seen = "/".join(methods) if isinstance(methods, list) and methods else "无"
+        seen = "/".join(methods) if isinstance(methods, list) and methods else "none"
         emit(
             logger,
-            f"[*] 支付资格：{eligibility_ok}/{len(eligibility_rows)} 个账号枚举成功；"
-            f"本批出现过的方式：{seen}",
+            f"[*] Payment eligibility: {eligibility_ok}/{len(eligibility_rows)} accounts enumerated; "
+            f"methods seen in this batch: {seen}",
         )
     for item in rows:
         if item.get("ok"):
@@ -369,7 +369,7 @@ def _print_quota_summary(result):
     )
     other_failed = len(rows) - ok - deactivated
     print(
-        f"[*] 测活完成：共 {len(rows)} 个账号，正常 {ok}，掉号 {deactivated}，其他失败 {other_failed}"
+        f"[*] Liveness check done: {len(rows)} accounts, {ok} normal, {deactivated} deactivated, {other_failed} other failures"
     )
     logger.info("liveness check finished: ok=%s/%s deactivated=%s", ok, len(rows), deactivated)
     for item in rows:
@@ -379,14 +379,14 @@ def _print_quota_summary(result):
             # A silent 401 -> relogin -> 200 recovery is otherwise invisible in
             # the panel; surface it so operators know the token rotated.
             if relogin.get("ok"):
-                print(f"[+] {email}: 重登成功，令牌已刷新")
+                print(f"[+] {email}: re-login succeeded, token refreshed")
                 logger.info("liveness relogin recovered %s", email)
             continue
         probe = item.get("probe") if isinstance(item.get("probe"), dict) else {}
         raw_reason = str(probe.get("status") or probe.get("error") or relogin.get("error") or item.get("error") or "failed")
         reason = _probe_reason_label(raw_reason)
         note = _relogin_panel_note(relogin)
-        dropped = "（已标记掉号：令牌吊销且无可恢复凭据）" if str(probe.get("dropped") or "") == "token_revoked" else ""
+        dropped = " (marked deactivated: token revoked and no recoverable credentials)" if str(probe.get("dropped") or "") == "token_revoked" else ""
         line = f"{reason}{note}{dropped}"
         print(f"[!] {email}: {line}")
         logger.warning("liveness check failed for %s: %s", email, line)
@@ -395,31 +395,31 @@ def _print_quota_summary(result):
 # Ordered longest-prefix-first: "curl: (28) ..." must win over a bare
 # "timed out" so the operator sees 网络超时 and not a raw curl string.
 _PROBE_REASON_LABELS = (
-    ("account_deactivated", "账号已注销"),
-    ("account_deatived", "账号已注销"),
+    ("account_deactivated", "Account deactivated"),
+    ("account_deatived", "Account deactivated"),
     # 优惠检测 already hands us a Chinese badge (AT失效 / 缺少AT / 检测失败);
     # match those before the English needles so they do not fall through to the
     # "检测失败（...）" tail.
-    ("at失效", "AT 失效（HTTP 401）"),
-    ("缺少at", "缺少 Access Token"),
-    ("检测失败", "检测失败"),
-    ("token_invalid", "AT 失效（HTTP 401）"),
-    ("health_timeout", "探测超时"),
-    ("scan_failed", "探测失败"),
-    ("scan_cancelled", "扫描已取消"),
-    ("mailbox_transport", "邮箱链路失败"),
-    ("mailbox_auth_invalid", "邮箱授权失效"),
-    ("mailbox_pool_repair_required", "邮箱池熔断中"),
-    ("remotedisconnected", "连接被远端断开"),
-    ("proxyerror", "代理连接失败"),
-    ("curl: (28)", "网络超时"),
-    ("curl: (7)", "无法连接代理"),
-    ("curl: (35)", "TLS 握手失败"),
-    ("curl: (56)", "连接被中断"),
-    ("timed out", "网络超时"),
-    ("timeout", "网络超时"),
-    ("unauthorized", "AT 失效（HTTP 401）"),
-    ("401", "AT 失效（HTTP 401）"),
+    ("at invalid", "AT invalid (HTTP 401)"),
+    ("missing at", "Missing Access Token"),
+    ("check failed", "Check failed"),
+    ("token_invalid", "AT invalid (HTTP 401)"),
+    ("health_timeout", "Probe timed out"),
+    ("scan_failed", "Probe failed"),
+    ("scan_cancelled", "Scan cancelled"),
+    ("mailbox_transport", "Mailbox link failed"),
+    ("mailbox_auth_invalid", "Mailbox auth invalid"),
+    ("mailbox_pool_repair_required", "Mailbox pool circuit-breaker open"),
+    ("remotedisconnected", "Connection closed by remote"),
+    ("proxyerror", "Proxy connection failed"),
+    ("curl: (28)", "Network timeout"),
+    ("curl: (7)", "Cannot reach proxy"),
+    ("curl: (35)", "TLS handshake failed"),
+    ("curl: (56)", "Connection interrupted"),
+    ("timed out", "Network timeout"),
+    ("timeout", "Network timeout"),
+    ("unauthorized", "AT invalid (HTTP 401)"),
+    ("401", "AT invalid (HTTP 401)"),
 )
 
 
@@ -433,7 +433,7 @@ def _probe_reason_label(reason: str) -> str:
     """
     text = str(reason or "").strip()
     if not text:
-        return "检测失败"
+        return "Check failed"
     lowered = text.lower()
     for needle, label in _PROBE_REASON_LABELS:
         if needle in lowered:
@@ -442,7 +442,7 @@ def _probe_reason_label(reason: str) -> str:
         return f"HTTP {text.split()[1]}" if len(text.split()) > 1 else text
     # Unknown reasons keep a short raw tail; truncating avoids dumping a
     # Cloudflare HTML page into the panel.
-    return f"检测失败（{text[:60]}）"
+    return f"Check failed ({text[:60]})"
 
 
 def _relogin_panel_note(relogin: dict) -> str:
@@ -457,16 +457,16 @@ def _relogin_panel_note(relogin: dict) -> str:
     error = str(relogin.get("error") or "")
     mode = str(relogin.get("mode") or "")
     if relogin.get("terminal") or "account_deactivated" in error:
-        return " → 重登确认账号已注销，已标记掉号"
+        return " -> Re-login confirmed deactivation; marked deactivated"
     if error == "mailbox_pool_repair_required" or mode == "disabled":
-        return " → 重登未执行：邮箱池熔断中（修复后用 --mailbox-pool-repaired 确认）"
+        return " -> Re-login not run: mailbox pool circuit-breaker open (after repair confirm with --mailbox-pool-repaired)"
     if mode == "cooldown" or "cooldown" in error:
-        return " → 重登跳过：冷却中"
+        return " -> Re-login skipped: cooling down"
     if mode == "concurrency_limited":
-        return " → 重登跳过：并发槽已满"
+        return " -> Re-login skipped: concurrency slots full"
     if error:
-        return f" → 重登失败：{error[:80]}"
-    return " → 重登未完成"
+        return f" -> Re-login failed: {error[:80]}"
+    return " -> Re-login incomplete"
 
 
 def quota_usage(args: Any) -> None:

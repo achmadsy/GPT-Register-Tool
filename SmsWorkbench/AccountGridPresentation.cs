@@ -63,6 +63,9 @@ namespace SmsWorkbench
         {
             string value = (status ?? "").Trim();
             if (value.Length == 0) return false;
+            // Current backend emits "Trial Plus·-N%·×N<period>"; rows recorded
+            // before translation used the Chinese label below.
+            if (value.StartsWith("Trial Plus", StringComparison.OrdinalIgnoreCase)) return true;
             return value.Contains("可试用", StringComparison.OrdinalIgnoreCase)
                 && value.Contains("plus", StringComparison.OrdinalIgnoreCase);
         }

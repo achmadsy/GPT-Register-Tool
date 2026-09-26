@@ -352,7 +352,7 @@ def clear_stale_promotion_at_marker(email, *, verified_at: int | None = None, ru
         if promotion_updated_at > cutoff:
             return False
         changed = False
-        if str(data.get("promotion_status") or "").strip() == "AT失效":
+        if str(data.get("promotion_status") or "").strip() in ("AT invalid", "AT失效"):
             data["promotion_status"] = ""
             changed = True
         if str(data.get("promotion_state") or "").strip() == PROMOTION_STATE_AUTH_INVALID:
@@ -360,7 +360,7 @@ def clear_stale_promotion_at_marker(email, *, verified_at: int | None = None, ru
             changed = True
         promotion = data.get("promotion") if isinstance(data.get("promotion"), dict) else None
         if isinstance(promotion, dict):
-            if str(promotion.get("status") or "").strip() == "AT失效":
+            if str(promotion.get("status") or "").strip() in ("AT invalid", "AT失效"):
                 promotion["status"] = ""
                 changed = True
             if str(promotion.get("state") or "").strip() == PROMOTION_STATE_AUTH_INVALID:

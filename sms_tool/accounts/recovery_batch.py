@@ -138,7 +138,7 @@ def refresh_local_quota_statuses(
         "batch_started",
         "running",
         total=len(accounts),
-        detail="账号测活开始",
+        detail="Liveness check started",
     )
     # The liveness probe is a single light GET, so a modestly higher ceiling keeps
     # a full-pool scan responsive; heavy 401 relogins only run for invalid tokens.
@@ -229,7 +229,7 @@ def refresh_local_quota_statuses(
                     "ok": False,
                     "mode": "local",
                     "status": "token_invalid",
-                    "quota_status": "401失效",
+                    "quota_status": "401 invalid",
                     "error": "token_revoked_unrecoverable",
                     "terminal": True,
                 }
@@ -253,7 +253,7 @@ def refresh_local_quota_statuses(
                     probe = {
                         "ok": False,
                         "status": "unknown",
-                        "quota_status": "检测失败",
+                        "quota_status": "Check failed",
                         "error": "invalid_probe_result",
                     }
                 browser_identity = account_identity(account).get("browser_identity") or {}
@@ -385,7 +385,7 @@ def refresh_local_quota_statuses(
                 # probe budget used to be rewritten to "网络超时", hiding the
                 # real failure from the panel and from 掉号 accounting.
                 probe = {**probe, "status": "timeout", "error": probe.get("error") or "account_timeout"}
-            status = str(probe.get("quota_status") or probe.get("status") or "未知")
+            status = str(probe.get("quota_status") or probe.get("status") or "Unknown")
             if relogin and not relogin.get("ok"):
                 status = _relogin_failure_quota_status(relogin)
             persisted = mark_quota_status(email, status, quota_result=probe) if email else False
@@ -409,7 +409,7 @@ def refresh_local_quota_statuses(
             result = {
                 "ok": False,
                 "email": email,
-                "quota_status": "检测失败",
+                "quota_status": "Check failed",
                 "probe": {"ok": False, "error": str(exc)[:200]},
                 "probe_ok": False,
                 "persisted": False,
@@ -424,7 +424,7 @@ def refresh_local_quota_statuses(
             "completed" if result.get("probe_ok") else "failed",
             account_ref=email,
             total=len(accounts),
-            detail=str(result.get("quota_status") or "检测完成"),
+            detail=str(result.get("quota_status") or "Check done"),
         )
         return index, result
 
@@ -473,7 +473,7 @@ def refresh_local_quota_statuses(
         "batch_completed",
         "completed",
         total=len(results),
-        detail="正常 {ok}/{total}，AT失效 {at_invalid}，掉号 {deactivated}，超时 {timed_out}".format(
+        detail="Normal {ok}/{total}, AT invalid {at_invalid}, deactivated {deactivated}, timed out {timed_out}".format(
             ok=success,
             total=len(results),
             at_invalid=at_invalid,

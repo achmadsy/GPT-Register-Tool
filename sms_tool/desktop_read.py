@@ -98,7 +98,7 @@ def _imported_status(session: Any) -> str:
         value = session.get(key)
         if isinstance(value, dict) and _truthy(value.get("ok")):
             imported.append(label)
-    return "已导入" + "/".join(imported) if imported else ""
+    return "Imported" + "/".join(imported) if imported else ""
 
 
 def _paypal_amount(session: Any) -> str:

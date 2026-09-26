@@ -161,7 +161,7 @@ def probe_account_liveness(
             "ok": False,
             "mode": "local",
             "status": "unknown",
-            "quota_status": "缺少账号",
+            "quota_status": "Missing account",
             "error": "invalid_account",
         }
     access_token = str(account.get("access_token") or "").strip()
@@ -170,7 +170,7 @@ def probe_account_liveness(
             "ok": False,
             "mode": "local",
             "status": "unknown",
-            "quota_status": "缺少AT",
+            "quota_status": "Missing AT",
             "error": "missing_access_token",
         }
 
@@ -234,7 +234,7 @@ def probe_account_liveness(
                 "ok": False,
                 "mode": "browser",
                 "status": "unknown",
-                "quota_status": "检测失败",
+                "quota_status": "Check failed",
                 "error": str(exc)[:500],
                 "proxy_source": proxy_source,
             }
@@ -269,7 +269,7 @@ def probe_account_liveness(
             "ok": False,
             "mode": "local",
             "status": "unknown",
-            "quota_status": "检测失败",
+            "quota_status": "Check failed",
             "error": error,
             "proxy_source": proxy_source,
         }
@@ -475,9 +475,9 @@ def _extract_error_text(payload: dict[str, Any]) -> str:
 
 def _quota_status_label(payload: dict[str, Any], status_code: int, error_text: str = "") -> str:
     if _is_token_invalid(status_code, error_text):
-        return "401失效"
+        return "401 invalid"
     if status_code in (402, 429) or re.search(r"insufficient|exceeded|rate.?limit|too many", error_text, re.I):
-        return "额度不足"
+        return "Insufficient quota"
     body = payload.get("body")
     if isinstance(body, str):
         try:
@@ -499,8 +499,8 @@ def _quota_status_label(payload: dict[str, Any], status_code: int, error_text: s
         if text_candidates:
             return " / ".join(text_candidates)[:80]
     if 200 <= status_code < 300:
-        return "可用"
-    return f"HTTP {status_code}" if status_code else "未知"
+        return "Normal"
+    return f"HTTP {status_code}" if status_code else "Unknown"
 
 
 def _is_token_invalid(status_code: int, error_text: str) -> bool:

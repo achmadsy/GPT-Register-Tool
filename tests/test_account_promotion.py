@@ -37,7 +37,7 @@ def test_parse_plus_trial_eligible():
     assert result["ok"] and result["plus_trial_eligible"]
     assert result["current_plan_type"] == "free"
     label = promotion_status_label(result)
-    assert "可试用Plus" in label and "70%" in label
+    assert "Trial Plus" in label and "70%" in label
 
 
 def test_parse_paid_subscription():
@@ -57,12 +57,12 @@ def test_parse_paid_subscription():
 def test_parse_free_without_promo():
     body = {"accounts": {"default": {"account": {"plan_type": "free"}, "entitlement": {"has_active_subscription": False}}}}
     result = parse_accounts_check(body)
-    assert promotion_status_label(result) == "Free·无优惠"
+    assert promotion_status_label(result) == "Free·No promotion"
 
 
 def test_labels_for_failures():
-    assert promotion_status_label({"ok": False, "error": "token_invalid"}) == "AT失效"
-    assert promotion_status_label({"ok": False, "error": "boom"}) == "检测失败"
+    assert promotion_status_label({"ok": False, "error": "token_invalid"}) == "AT invalid"
+    assert promotion_status_label({"ok": False, "error": "boom"}) == "Check failed"
 
 
 def test_promotion_uses_dedicated_health_proxy_with_account_fingerprint_and_device():
@@ -120,7 +120,7 @@ def test_refresh_promotion_statuses_emits_terminal_event_per_account(monkeypatch
     monkeypatch.setattr("sms_tool.desktop_ipc.emit_event", lambda payload, enabled=None: events.append(payload) or True)
     monkeypatch.setattr("sms_tool.storage.get_account_record", lambda email: {"email": email, "access_token": "at"})
     monkeypatch.setattr("sms_tool.storage.mark_promotion_status", lambda *args, **kwargs: True)
-    monkeypatch.setattr(account_promotion, "check_account_promotion", lambda account, **kwargs: {"ok": True, "promotion_status": "Free·无优惠"})
+    monkeypatch.setattr(account_promotion, "check_account_promotion", lambda account, **kwargs: {"ok": True, "promotion_status": "Free·No promotion"})
 
     # Promotion-only subject: the payment-eligibility probe is a separate
     # network boundary (Checkout + Stripe init) and would otherwise fire real
@@ -150,10 +150,10 @@ def test_refresh_promotion_statuses_rotates_stateless_proxy_after_timeout(monkey
         if len(calls) == 1:
             return {
                 "ok": False,
-                "promotion_status": "检测失败",
+                "promotion_status": "Check failed",
                 "error": "Failed to perform, curl: (28) Connection timed out",
             }
-        return {"ok": True, "promotion_status": "Free·无优惠"}
+        return {"ok": True, "promotion_status": "Free·No promotion"}
 
     monkeypatch.setattr(account_promotion, "check_account_promotion", probe)
     result = account_promotion.refresh_promotion_statuses(
@@ -183,14 +183,14 @@ def _trial_probe(**overrides):
         "plus_trial_discount_percentage": 100,
         "plus_trial_duration_num_periods": 1,
         "plus_trial_duration_period": "month",
-        "promotion_status": "可试用Plus·-100%·×1month",
+        "promotion_status": "Trial Plus·-100%·×1month",
     }
     probe.update(overrides)
     return probe
 
 
 def test_trial_label():
-    assert promotion_status_label(_trial_probe()) == "可试用Plus·-100%·×1month"
+    assert promotion_status_label(_trial_probe()) == "Trial Plus·-100%·×1month"
 
 
 def test_post_registration_promotion_stage_deduplicates_and_counts_trials():
@@ -201,8 +201,8 @@ def test_post_registration_promotion_stage_deduplicates_and_counts_trials():
         "failed": 0,
         "trial_eligible": 1,
         "results": [
-            {"email": "one@example.com", "promotion_status": "可试用Plus", "probe": {"plus_trial_eligible": True}},
-            {"email": "two@example.com", "promotion_status": "Free·无优惠", "probe": {"plus_trial_eligible": False}},
+            {"email": "one@example.com", "promotion_status": "Trial Plus", "probe": {"plus_trial_eligible": True}},
+            {"email": "two@example.com", "promotion_status": "Free·No promotion", "probe": {"plus_trial_eligible": False}},
         ],
     }
     with patch("sms_tool.accounts.account_promotion.refresh_promotion_statuses", return_value=result) as refresh:
@@ -325,7 +325,7 @@ def test_promotion_uses_browser_fetch_when_browser_identity_present():
         )
 
     assert result["ok"]
-    assert result["promotion_status"] == "Free·无优惠"
+    assert result["promotion_status"] == "Free·No promotion"
     # curl_cffi must NOT be called when browser_fetch is provided
     curl_get.assert_not_called()
 
@@ -379,11 +379,11 @@ def test_promotion_normalizes_browser_fetch_status_key():
 
     assert result["ok"], result
     assert result["status_code"] == 200
-    assert result["promotion_status"] == "Free·无优惠"
+    assert result["promotion_status"] == "Free·No promotion"
 
 
 def test_promotion_surfaces_real_browser_http_errors_not_zero():
-    """A genuine 401 from the browser must surface as AT失效, not HTTP 0."""
+    """A genuine 401 from the browser must surface as AT invalid, not HTTP 0."""
     account, config = _browser_identity_account()
 
     def fake_browser_fetch(url, *, headers=None, timeout_ms=None):
@@ -395,7 +395,7 @@ def test_promotion_surfaces_real_browser_http_errors_not_zero():
         )
 
     assert result["status_code"] == 401
-    assert result["promotion_status"] == "AT失效"
+    assert result["promotion_status"] == "AT invalid"
 
 
 def test_promotion_401_stays_in_promotion_namespace(tmp_path):
@@ -416,7 +416,7 @@ def test_promotion_401_stays_in_promotion_namespace(tmp_path):
 
     assert mark_promotion_status(
         session["email"],
-        "AT失效",
+        "AT invalid",
         {"ok": False, "status_code": 401, "error": "token_invalid"},
         runtime_config=config,
     )
@@ -424,7 +424,7 @@ def test_promotion_401_stays_in_promotion_namespace(tmp_path):
     record = get_account_record(session["email"], runtime_config=config)
     assert record["status"] == "registered"
     public = read_account(email=session["email"], runtime_config=config)
-    assert public["promotion_status"] == "AT失效"
+    assert public["promotion_status"] == "AT invalid"
     assert public.get("at_probe_status_code", "") != "401"
 
 
@@ -443,13 +443,13 @@ def test_liveness_200_restores_shared_at_status_after_promotion_401(tmp_path):
     assert upsert_account(session, runtime_config=config)
     assert mark_quota_status(
         session["email"],
-        "可用",
+        "Normal",
         {"ok": True, "status_code": 200, "status": "active"},
         runtime_config=config,
     )
     record = get_account_record(session["email"], runtime_config=config)
     assert record["status"] == "registered"
-    assert record["quota_status"] == "可用"
+    assert record["quota_status"] == "Normal"
 def test_promotion_explicit_proxy_wins_over_pool():
     config = {
         "account_health": {
@@ -495,7 +495,7 @@ def test_promotion_state_is_persisted_next_to_the_label(tmp_path):
     assert markers.mark_promotion_status(
         "state@example.test",
         "可试用Plus·-100%·×1month",
-        {"ok": True, "promotion_status": "可试用Plus·-100%·×1month", "promotion_state": "trial_eligible"},
+        {"ok": True, "promotion_status": "Trial Plus·-100%·×1month", "promotion_state": "trial_eligible"},
         runtime_config=config,
     )
     record = get_account_record("state@example.test", runtime_config=config)
@@ -506,9 +506,9 @@ def test_promotion_state_is_persisted_next_to_the_label(tmp_path):
 
 def test_promotion_marker_is_stale_rule_is_single_owned():
     # 401 标记 + 后来 AT 200 ⇒ 标记过期；机器状态优先，旧记录回落到文案。
-    assert promotion_marker_is_stale("AT失效", "", "200") is True
+    assert promotion_marker_is_stale("AT invalid", "", "200") is True
     assert promotion_marker_is_stale("", "auth_invalid", 200) is True
-    assert promotion_marker_is_stale("AT失效", "", "") is False
-    assert promotion_marker_is_stale("AT失效", "", "401") is False
+    assert promotion_marker_is_stale("AT invalid", "", "") is False
+    assert promotion_marker_is_stale("AT invalid", "", "401") is False
     assert promotion_marker_is_stale("", "probe_failed", "200") is False
-    assert promotion_marker_is_stale("Free·无优惠", "free", "200") is False
+    assert promotion_marker_is_stale("Free·No promotion", "free", "200") is False

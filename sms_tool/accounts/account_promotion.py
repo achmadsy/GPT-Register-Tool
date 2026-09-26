@@ -129,17 +129,17 @@ def promotion_status_label(result: dict[str, Any]) -> str:
     if not isinstance(result, dict) or not result.get("ok"):
         error = str((result or {}).get("error") or "").lower()
         if "401" in error or "token" in error or "unauthorized" in error:
-            return "AT失效"
-        return "检测失败"
+            return "AT invalid"
+        return "Check failed"
     plan = str(result.get("current_plan_type") or "").strip().lower()
     if result.get("has_active_subscription") and plan and plan != "free":
-        label = "Plus" if "plus" in plan else (plan or "已订阅")
-        return f"{label.capitalize()}(赠)" if result.get("is_active_subscription_gratis") else f"已订阅·{label}"
+        label = "Plus" if "plus" in plan else (plan or "Subscribed")
+        return f"{label.capitalize()} (gift)" if result.get("is_active_subscription_gratis") else f"Subscribed·{label}"
     if result.get("plus_trial_eligible"):
         pct = result.get("plus_trial_discount_percentage")
         periods = result.get("plus_trial_duration_num_periods")
         period = str(result.get("plus_trial_duration_period") or "").strip()
-        parts = ["可试用Plus"]
+        parts = ["Trial Plus"]
         if pct not in (None, ""):
             try:
                 parts.append(f"-{int(round(float(pct)))}%")
@@ -148,7 +148,7 @@ def promotion_status_label(result: dict[str, Any]) -> str:
         if periods not in (None, "") and period:
             parts.append(f"×{periods}{period}")
         return "·".join(parts)
-    return "Free·无优惠"
+    return "Free·No promotion"
 
 
 def promotion_status_code(result: Any) -> str:
@@ -192,7 +192,7 @@ def check_account_promotion(
     """
     token = _account_token(account)
     if not token:
-        return {"ok": False, "promotion_status": "缺少AT", "error": "missing_access_token", "promotion_state": PROMOTION_STATE_PROBE_FAILED}
+        return {"ok": False, "promotion_status": "Missing AT", "error": "missing_access_token", "promotion_state": PROMOTION_STATE_PROBE_FAILED}
 
     had_identity_context = bool(account.get("identity_context")) if isinstance(account, dict) else False
     identity = bind_account_identity(account)
@@ -237,7 +237,7 @@ def check_account_promotion(
                 status_code = 0
                 body = result
         except Exception as exc:
-            return {"ok": False, "promotion_status": "检测失败", "error": str(exc)[:300], "promotion_state": PROMOTION_STATE_PROBE_FAILED, "proxy_source": proxy_source}
+            return {"ok": False, "promotion_status": "Check failed", "error": str(exc)[:300], "promotion_state": PROMOTION_STATE_PROBE_FAILED, "proxy_source": proxy_source}
     else:
         normalized_proxy = normalize_proxy_url(resolved_proxy)
         proxies = {"http": normalized_proxy, "https": normalized_proxy} if normalized_proxy else None
@@ -251,7 +251,7 @@ def check_account_promotion(
             for candidate in (str(proxy or "").strip(), str(resolved_proxy or "").strip(), normalized_proxy):
                 if candidate:
                     error = error.replace(candidate, _redact_proxy_url(candidate, empty_placeholder=""))
-            return {"ok": False, "promotion_status": "检测失败", "error": error[:300], "promotion_state": PROMOTION_STATE_PROBE_FAILED, "proxy_source": proxy_source}
+            return {"ok": False, "promotion_status": "Check failed", "error": error[:300], "promotion_state": PROMOTION_STATE_PROBE_FAILED, "proxy_source": proxy_source}
         status_code = int(getattr(response, "status_code", 0) or 0)
         try:
             retry_after = str((getattr(response, "headers", None) or {}).get("Retry-After") or "").strip()
@@ -260,10 +260,10 @@ def check_account_promotion(
         try:
             body = response.json()
         except Exception:
-            return {"ok": False, "promotion_status": "检测失败", "error": "invalid_json", "status_code": status_code, "promotion_state": PROMOTION_STATE_PROBE_FAILED, "proxy_source": proxy_source}
+            return {"ok": False, "promotion_status": "Check failed", "error": "invalid_json", "status_code": status_code, "promotion_state": PROMOTION_STATE_PROBE_FAILED, "proxy_source": proxy_source}
 
     if status_code == 401:
-        return {"ok": False, "promotion_status": "AT失效", "error": "token_invalid", "status_code": 401, "promotion_state": PROMOTION_STATE_AUTH_INVALID, "proxy_source": proxy_source}
+        return {"ok": False, "promotion_status": "AT invalid", "error": "token_invalid", "status_code": 401, "promotion_state": PROMOTION_STATE_AUTH_INVALID, "proxy_source": proxy_source}
     if not (200 <= status_code < 300):
         failure = {
             "ok": False,
@@ -326,7 +326,7 @@ def refresh_promotion_statuses(
     max_workers = max(1, min(int(workers or 1), 16, len(accounts) or 1))
     results: list[dict[str, Any]] = []
     run_id = uuid.uuid4().hex
-    _emit_account_batch_event(run_id, "batch_started", "running", total=len(accounts), detail="账号优惠检测开始")
+    _emit_account_batch_event(run_id, "batch_started", "running", total=len(accounts), detail="Promotion check started")
 
     def run(account: dict[str, Any]) -> dict[str, Any]:
         email = str(account.get("email") or "").strip().lower()
@@ -337,7 +337,7 @@ def refresh_promotion_statuses(
                 if browser_identity and browser_fetch is None:
                     probe = {
                         "ok": False,
-                        "promotion_status": "检测失败",
+                        "promotion_status": "Check failed",
                         "error": "browser_context_unavailable",
                     }
                 else:
@@ -379,7 +379,7 @@ def refresh_promotion_statuses(
                             break
                     probe = probe or {
                         "ok": False,
-                        "promotion_status": "检测失败",
+                        "promotion_status": "Check failed",
                         "error": "no_promotion_proxy_available",
                     }
             label = str(probe.get("promotion_status") or "")
@@ -421,14 +421,14 @@ def refresh_promotion_statuses(
             # the separator rule.
             result["promotion_display"] = promotion_status_with_eligibility(label, eligibility_label)
         except Exception as exc:
-            result = {"email": email, "ok": False, "promotion_status": "检测失败", "promotion_state": PROMOTION_STATE_PROBE_FAILED, "persisted": False, "probe": {"ok": False, "error": str(exc)[:200]}}
+            result = {"email": email, "ok": False, "promotion_status": "Check failed", "promotion_state": PROMOTION_STATE_PROBE_FAILED, "persisted": False, "probe": {"ok": False, "error": str(exc)[:200]}}
         _emit_account_batch_event(
             run_id,
             "account_completed",
             "completed" if result.get("ok") else "failed",
             account_ref=email,
             total=len(accounts),
-            detail=str(result.get("promotion_status") or "检测完成"),
+            detail=str(result.get("promotion_status") or "Check completed"),
         )
         return result
 
@@ -467,8 +467,8 @@ def refresh_promotion_statuses(
         "completed" if success == len(results) else "failed",
         total=len(results),
         detail=(
-            f"完成 {len(results)} 个账号，成功 {success}，401 {unauthorized}，"
-            f"传输失败 {transport_failed}，支付资格 {eligibility_ok}/{len(eligibility_results)}"
+            f"Completed {len(results)} accounts, {success} succeeded, 401 {unauthorized}, "
+            f"transport failed {transport_failed}, payment eligibility {eligibility_ok}/{len(eligibility_results)}"
         ),
     )
     return {

@@ -19,9 +19,10 @@ PROMOTION_STATE_AUTH_INVALID = "auth_invalid"
 PROMOTION_STATE_PROBE_FAILED = "probe_failed"
 PROMOTION_STATE_UNKNOWN = "unknown"
 
-# Legacy display label for an auth-failed promotion probe. Kept only as a
-# fallback for records written before ``promotion_state`` existed.
-AUTH_INVALID_LABEL = "AT失效"
+# Display label for an auth-failed promotion probe. LEGACY keeps the
+# pre-English wording so records persisted before the relabel still match.
+AUTH_INVALID_LABEL = "AT invalid"
+AUTH_INVALID_LEGACY_LABELS = ("AT invalid", "AT失效")
 
 
 def promotion_marker_is_stale(
@@ -44,7 +45,7 @@ def promotion_marker_is_stale(
     state = str(promotion_state or "").strip().lower()
     if state:
         return state == PROMOTION_STATE_AUTH_INVALID
-    return str(promotion_status or "").strip() == AUTH_INVALID_LABEL
+    return str(promotion_status or "").strip() in AUTH_INVALID_LEGACY_LABELS
 
 
 # ---------------------------------------------------------------------------
@@ -69,7 +70,7 @@ MAX_ELIGIBILITY_LABEL_TOKENS = 8
 # ``/backend-api/payments/checkout``), so reading it as an account attribute is
 # a wrong conclusion rather than a missing one.  See
 # ``docs/audits/scan-2026-09-21-payment-eligibility-in-promotion-column.md`` §9.6.
-PAYMENT_ELIGIBILITY_UNKNOWN_LABEL = "支付资格未知"
+PAYMENT_ELIGIBILITY_UNKNOWN_LABEL = "Payment eligibility unknown"
 
 
 def payment_method_tokens(result: object) -> tuple[str, ...]:

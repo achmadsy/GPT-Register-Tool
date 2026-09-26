@@ -1044,8 +1044,8 @@ def test_successful_relogin_replaces_stale_quota_401_metadata():
 def test_successful_relogin_clears_stale_promotion_at_marker():
     data = {
         "status": "at_invalid",
-        "promotion_status": "AT失效",
-        "promotion": {"status": "AT失效", "last_result": {"status_code": 401}},
+        "promotion_status": "AT invalid",
+        "promotion": {"status": "AT invalid", "last_result": {"status_code": 401}},
     }
     probe = {
         "ok": True,

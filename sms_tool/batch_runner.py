@@ -385,13 +385,13 @@ def _emit_mailboxes_skipped(skipped, *, reason: str) -> None:
             return
         preview = ", ".join(mask_account(email) for email in skipped[:3])
         suffix = f" +{len(skipped) - 3}" if len(skipped) > 3 else ""
-        reason_zh = "已注册" if reason == "already_registered" else "冷却/隔离/死路"
+        reason_label = "already registered" if reason == "already_registered" else "cooldown/isolated/dead-end"
         emit_event({
             "domain": "registration",
             "operation": "registration",
             "stage": "mailboxes_skipped",
             "status": "running",
-            "detail": f"后端剔除 {len(skipped)} 个（{reason_zh}）：{preview}{suffix}",
+            "detail": f"Backend dropped {len(skipped)} ({reason_label}): {preview}{suffix}",
             "reason": reason,
             "skipped_count": len(skipped),
             "skipped": [mask_account(email) for email in skipped],

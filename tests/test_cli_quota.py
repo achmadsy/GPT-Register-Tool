@@ -141,21 +141,21 @@ class ReloginPanelNoteTests(unittest.TestCase):
 
     def test_disabled_gate_explains_the_breaker(self):
         note = self._note({"ok": False, "mode": "disabled", "error": "mailbox_pool_repair_required"})
-        self.assertIn("邮箱池熔断", note)
+        self.assertIn("mailbox pool circuit-breaker open", note)
         self.assertIn("mailbox-pool-repaired", note)
 
     def test_terminal_deactivation_reports_the_drop(self):
         note = self._note({"ok": False, "mode": "chatgpt_email_otp", "error": "account_deactivated", "terminal": True})
-        self.assertIn("已注销", note)
-        self.assertIn("掉号", note)
+        self.assertIn("deactivation", note)
+        self.assertIn("marked deactivated", note)
 
     def test_cooldown_and_concurrency_are_distinguished(self):
-        self.assertIn("冷却中", self._note({"ok": False, "mode": "cooldown", "error": "relogin_cooldown"}))
-        self.assertIn("并发槽", self._note({"ok": False, "mode": "concurrency_limited", "error": "relogin_concurrency_limited"}))
+        self.assertIn("cooling down", self._note({"ok": False, "mode": "cooldown", "error": "relogin_cooldown"}))
+        self.assertIn("concurrency slots full", self._note({"ok": False, "mode": "concurrency_limited", "error": "relogin_concurrency_limited"}))
 
     def test_generic_failure_includes_the_error(self):
         note = self._note({"ok": False, "mode": "chatgpt_email_otp", "error": "email_otp_timeout"})
-        self.assertIn("重登失败", note)
+        self.assertIn("Re-login failed", note)
         self.assertIn("email_otp_timeout", note)
 
     def test_success_and_absent_relogin_produce_no_note(self):
@@ -186,13 +186,13 @@ class ReloginPanelNoteTests(unittest.TestCase):
         with redirect_stdout(buffer):
             _print_quota_summary(result)
         output = buffer.getvalue()
-        self.assertIn("邮箱池熔断", output)
-        self.assertIn("已标记掉号", output)
-        self.assertIn("重登成功，令牌已刷新", output)
+        self.assertIn("mailbox pool circuit-breaker open", output)
+        self.assertIn("marked deactivated: token revoked", output)
+        self.assertIn("re-login succeeded, token refreshed", output)
 
 
 class ProbeReasonLabelTests(unittest.TestCase):
-    """The panel must show Chinese reasons, not raw backend strings."""
+    """The panel must show readable reasons, not raw backend strings."""
 
     @staticmethod
     def _label(raw):
@@ -201,30 +201,30 @@ class ProbeReasonLabelTests(unittest.TestCase):
         return _probe_reason_label(raw)
 
     def test_known_reasons_are_translated(self):
-        self.assertEqual("账号已注销", self._label("account_deactivated"))
-        self.assertEqual("AT 失效（HTTP 401）", self._label("token_invalid"))
-        self.assertEqual("AT 失效（HTTP 401）", self._label("HTTP 401"))
-        self.assertEqual("网络超时", self._label("curl: (28) Operation timed out"))
-        self.assertEqual("代理连接失败", self._label("HTTPSConnectionPool: ProxyError"))
-        self.assertEqual("邮箱链路失败", self._label("mailbox_transport"))
+        self.assertEqual("Account deactivated", self._label("account_deactivated"))
+        self.assertEqual("AT invalid (HTTP 401)", self._label("token_invalid"))
+        self.assertEqual("AT invalid (HTTP 401)", self._label("HTTP 401"))
+        self.assertEqual("Network timeout", self._label("curl: (28) Operation timed out"))
+        self.assertEqual("Proxy connection failed", self._label("HTTPSConnectionPool: ProxyError"))
+        self.assertEqual("Mailbox link failed", self._label("mailbox_transport"))
 
     def test_translation_is_case_insensitive(self):
-        self.assertEqual("账号已注销", self._label("Account_Deactivated"))
-        self.assertEqual("网络超时", self._label("CURL: (28) timed out"))
+        self.assertEqual("Account deactivated", self._label("Account_Deactivated"))
+        self.assertEqual("Network timeout", self._label("CURL: (28) timed out"))
 
     def test_unknown_reason_keeps_a_truncated_tail(self):
-        self.assertEqual("检测失败（weird_new_error）", self._label("weird_new_error"))
+        self.assertEqual("Check failed (weird_new_error)", self._label("weird_new_error"))
 
     def test_unknown_reason_is_truncated_so_html_cannot_flood_the_panel(self):
         label = self._label("x" * 400)
-        self.assertTrue(label.startswith("检测失败（"))
+        self.assertTrue(label.startswith("Check failed ("))
         self.assertLess(len(label), 80)
 
     def test_empty_reason_falls_back_to_a_label(self):
-        self.assertEqual("检测失败", self._label(""))
-        self.assertEqual("检测失败", self._label(None))
+        self.assertEqual("Check failed", self._label(""))
+        self.assertEqual("Check failed", self._label(None))
 
-    def test_liveness_summary_line_is_chinese(self):
+    def test_liveness_summary_line_is_english(self):
         from sms_tool.commands.accounts import _print_quota_summary
 
         result = {
@@ -247,30 +247,29 @@ class ProbeReasonLabelTests(unittest.TestCase):
         with redirect_stdout(buffer):
             _print_quota_summary(result)
         output = buffer.getvalue()
-        # No raw English reason in the panel any more.
+        # Raw machine reasons stay out of the panel.
         self.assertNotIn("token_invalid", output)
-        self.assertNotIn("Liveness check", output)
-        self.assertIn("AT 失效（HTTP 401）", output)
-        self.assertIn("账号已注销", output)
-        self.assertIn("测活完成：共 3 个账号，正常 1，掉号 1，其他失败 1", output)
+        self.assertIn("AT invalid (HTTP 401)", output)
+        self.assertIn("Account deactivated", output)
+        self.assertIn("[*] Liveness check done: 3 accounts, 1 normal, 1 deactivated, 1 other failures", output)
 
-    def test_promotion_summary_prints_staged_chinese_lines(self):
+    def test_promotion_summary_prints_staged_lines(self):
         from sms_tool.commands.accounts import _print_promotion_summary
 
         result = {
             "ok": False,
             "total": 2,
             "results": [
-                {"email": "a@example.com", "ok": True, "promotion_status": "可试用Plus-50%"},
-                {"email": "b@example.com", "ok": False, "promotion_status": "AT失效"},
+                {"email": "a@example.com", "ok": True, "promotion_status": "Trial Plus·-50%·×1month"},
+                {"email": "b@example.com", "ok": False, "promotion_status": "AT invalid"},
             ],
         }
         buffer = io.StringIO()
         with redirect_stdout(buffer):
             _print_promotion_summary(result)
         output = buffer.getvalue()
-        self.assertIn("优惠检测完成：共 2 个账号，检测成功 1，失败 1", output)
-        self.assertIn("[!] b@example.com: AT 失效（HTTP 401）", output)
+        self.assertIn("[*] Promotion check done: 2 accounts, 1 probe succeeded, 1 failed", output)
+        self.assertIn("[!] b@example.com: AT invalid (HTTP 401)", output)
         # Successful rows stay out of the panel; they live in the result dialog.
         self.assertNotIn("a@example.com", output)
 

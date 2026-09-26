@@ -19,7 +19,7 @@
         "plus_trial_duration_num_periods": 1,
         "plus_trial_duration_period": "month"
       },
-      "label": "可试用Plus·-100%·×1month",
+      "label": "Trial Plus·-100%·×1month",
       "state": "trial_eligible",
       "legacy_fallback": true,
       "sort_rank": 0
@@ -34,7 +34,7 @@
         "plus_trial_duration_num_periods": 3,
         "plus_trial_duration_period": "month"
       },
-      "label": "可试用Plus·-50%·×3month",
+      "label": "Trial Plus·-50%·×3month",
       "state": "trial_eligible",
       "legacy_fallback": true,
       "sort_rank": 0
@@ -46,7 +46,7 @@
         "current_plan_type": "chatgptplusplan",
         "has_active_subscription": true
       },
-      "label": "已订阅·Plus",
+      "label": "Subscribed·Plus",
       "state": "subscribed",
       "legacy_fallback": false,
       "sort_rank": 1
@@ -59,7 +59,7 @@
         "has_active_subscription": true,
         "is_active_subscription_gratis": true
       },
-      "label": "Plus(赠)",
+      "label": "Plus (gift)",
       "state": "subscribed",
       "legacy_fallback": false,
       "sort_rank": 1
@@ -70,7 +70,7 @@
         "ok": true,
         "current_plan_type": "free"
       },
-      "label": "Free·无优惠",
+      "label": "Free·No promotion",
       "state": "free",
       "legacy_fallback": false,
       "sort_rank": 1
@@ -81,7 +81,7 @@
         "ok": false,
         "error": "token_invalid"
       },
-      "label": "AT失效",
+      "label": "AT invalid",
       "state": "auth_invalid",
       "legacy_fallback": false,
       "sort_rank": 1
@@ -92,7 +92,7 @@
         "ok": false,
         "error": "invalid_json"
       },
-      "label": "检测失败",
+      "label": "Check failed",
       "state": "probe_failed",
       "legacy_fallback": false,
       "sort_rank": 1
@@ -100,7 +100,7 @@
     {
       "name": "empty_result_is_unknown",
       "result": {},
-      "label": "检测失败",
+      "label": "Check failed",
       "state": "unknown",
       "legacy_fallback": false,
       "sort_rank": 1

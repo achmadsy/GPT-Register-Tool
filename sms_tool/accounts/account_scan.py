@@ -304,8 +304,8 @@ def _scan_one(
         )
         result["subscription_type"] = _subscription_type(data)
         result["at_status"] = _at_status_label(result, {}, oauth_result)
-        result["phone_verification_required_label"] = "否"
-        result["dropped"] = "否"
+        result["phone_verification_required_label"] = "No"
+        result["dropped"] = "No"
         _persist_scan(data, json_path, result)
         print(f"[OK] {email} alive (probe-only)")
         return result
@@ -336,8 +336,8 @@ def _scan_one(
         )
         result["subscription_type"] = _subscription_type(data)
         result["at_status"] = _at_status_label(result, refresh_result, oauth_result)
-        result["phone_verification_required_label"] = "是" if result.get("phone_verification_required") else "否"
-        result["dropped"] = "否"
+        result["phone_verification_required_label"] = "Yes" if result.get("phone_verification_required") else "No"
+        result["dropped"] = "No"
         _persist_scan(data, json_path, result)
         print(f"[OK] {email} alive")
         return result
@@ -359,8 +359,8 @@ def _scan_one(
         )
         result["subscription_type"] = _subscription_type(data)
         result["at_status"] = _at_status_label(result, refresh_result, oauth_result)
-        result["phone_verification_required_label"] = "是" if result.get("phone_verification_required") else "否"
-        result["dropped"] = "是"
+        result["phone_verification_required_label"] = "Yes" if result.get("phone_verification_required") else "No"
+        result["dropped"] = "Yes"
         _persist_scan(data, json_path, result)
         print(f"[DEACTIVATED] {email}")
         return result
@@ -386,8 +386,8 @@ def _scan_one(
         )
         result["subscription_type"] = _subscription_type(data)
         result["at_status"] = _at_status_label(result, refresh_result, oauth_result)
-        result["phone_verification_required_label"] = "是"
-        result["dropped"] = "否"
+        result["phone_verification_required_label"] = "Yes"
+        result["dropped"] = "No"
         _persist_scan(data, json_path, result)
         label = "SECONDARY_PHONE" if had_rt else "PHONE_REQUIRED"
         print(f"[{label}] {email}")
@@ -413,8 +413,8 @@ def _scan_one(
         )
         result["subscription_type"] = _subscription_type(data)
         result["at_status"] = _at_status_label(result, refresh_result, oauth_result)
-        result["phone_verification_required_label"] = "是" if result.get("phone_verification_required") else "否"
-        result["dropped"] = "否"
+        result["phone_verification_required_label"] = "Yes" if result.get("phone_verification_required") else "No"
+        result["dropped"] = "No"
         _persist_scan(data, json_path, result)
         print(f"[OK] {email} alive; OAuth probe inconclusive: {_oauth_error(oauth_result)}")
         return result
@@ -438,8 +438,8 @@ def _scan_one(
     result["subscription_type"] = _subscription_type(data)
     result["failure_class"] = failure_class
     result["at_status"] = _at_status_label(result, refresh_result, oauth_result)
-    result["phone_verification_required_label"] = "是" if result.get("phone_verification_required") else "否"
-    result["dropped"] = "否"
+    result["phone_verification_required_label"] = "Yes" if result.get("phone_verification_required") else "No"
+    result["dropped"] = "No"
     _persist_scan(data, json_path, result)
     print(f"[FAIL] {email}: {_oauth_error(relogin_result or oauth_result or refresh_result)}")
     return result
@@ -575,29 +575,29 @@ def _scan_overview(result):
     dropped_value = str((result or {}).get("dropped") or "").strip().lower()
     dropped = (
         str((result or {}).get("scan_status") or "").strip() == "account_deactivated"
-        or dropped_value in {"是", "yes", "true", "1"}
+        or dropped_value in {"Yes", "yes", "true", "1", "是"}
     )
     return {
         "email": str((result or {}).get("email") or "").strip(),
         "at_status": _at_status_label(result or {}, (result or {}).get("refresh") or {}, (result or {}).get("oauth") or {}),
-        "phone_verification_required": "是" if bool((result or {}).get("phone_verification_required")) else "否",
+        "phone_verification_required": "Yes" if bool((result or {}).get("phone_verification_required")) else "No",
         "subscription_type": _subscription_type(result or {}),
-        "dropped": "是" if dropped else "否",
+        "dropped": "Yes" if dropped else "No",
     }
 
 
 def _print_scan_overview(results):
     if not results:
         return
-    print("[*] 扫号概览:")
+    print("[*] Scan overview:")
     for index, result in enumerate(results, 1):
         overview = _scan_overview(result)
         print(
             f"{index}. {overview['email']} | "
             f"AT: {overview['at_status']} | "
-            f"需要手机号验证: {overview['phone_verification_required']} | "
-            f"订阅类型: {overview['subscription_type']} | "
-            f"已掉号: {overview['dropped']}"
+            f"Phone verification required: {overview['phone_verification_required']} | "
+            f"Subscription type: {overview['subscription_type']} | "
+            f"Dropped: {overview['dropped']}"
         )
 
 
@@ -674,12 +674,12 @@ def _at_status_label(result, refresh_result=None, oauth_result=None):
     token_probe = (result or {}).get("token_probe") if isinstance((result or {}).get("token_probe"), dict) else {}
     scan_status = str((result or {}).get("scan_status") or "").strip()
     if scan_status == "account_deactivated":
-        return "AT失效"
+        return "AT invalid"
     if oauth_ok and not refresh_ok:
-        return "AT失效已刷新"
+        return "AT invalid, refreshed"
     if refresh_ok or bool((result or {}).get("ok")) or _token_probe_is_active(token_probe):
-        return "AT有效"
-    return "AT失效"
+        return "AT valid"
+    return "AT invalid"
 
 
 def _public_oauth_result(result):
@@ -850,7 +850,7 @@ def _probe_existing_access_token(data, proxy=None, timeout=120):
             "ok": False,
             "mode": "local",
             "status": "unknown",
-            "quota_status": "探测失败",
+            "quota_status": "Probe failed",
             "error": str(exc)[:300],
         }
 

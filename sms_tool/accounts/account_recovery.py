@@ -687,8 +687,8 @@ def _mark_successful_relogin(data: dict[str, Any], probe: dict[str, Any], *, now
     # even though the newly persisted token has passed the canonical probe.
     quota = data.get("quota") if isinstance(data.get("quota"), dict) else {}
     quota_status = str(probe.get("quota_status") or "").strip()
-    if not quota_status or quota_status in {"401失效", "token_invalid", "HTTP 401"}:
-        quota_status = "可用"
+    if not quota_status or quota_status in {"401失效", "401 invalid", "token_invalid", "HTTP 401"}:
+        quota_status = "Normal"
     quota["status"] = quota_status
     quota["updated_at"] = timestamp
     quota["last_result"] = {
