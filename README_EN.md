@@ -115,16 +115,32 @@ The Chinese README contains the complete feature, configuration, architecture, C
 
 ## English onboarding: account and mailbox imports
 
-**Import Session JSON (Local)** is for existing OpenAI account session files you already own. Select one or more JSON files from **Account Management**. The tool validates an email plus an access, refresh, or session token, then stores accepted data in the local `sessions/` directory and the SQLite index. Existing email records are skipped. This path does not log in, register, refresh, or send data to another service.
+**Import Session JSON (Local)** is for existing OpenAI account session files you already own. Select one or more JSON files from **Account Management**. Use **one account object per file**; top-level arrays and export envelopes are rejected. The object must contain a valid email at one of these paths: `email`, `user.email`, `auth_session.email`, or `auth_session.user.email`. It must also contain at least one credential: `access_token`/`accessToken`, `oauth_refresh_token`/`refresh_token`, or `session_token`/`sessionToken` (the supported `auth_session` nesting is accepted). `cookie_header` alone is not enough.
 
-Common accepted shapes:
+Accepted data is stored locally under configured `output.directory` (default `sessions`) and indexed in configured `storage.sqlite_path` (default `runtime/accounts.sqlite3`). Existing email records are skipped; current filters, paging, and duplicate-row preference can hide an imported row after refresh. This path does not log in, register, refresh, or send data to another service.
+
+Valid examples using placeholders only:
 
 ```json
-{"email":"account@example.com","access_token":"..."}
+{"email":"account@example.com","access_token":"YOUR_ACCESS_TOKEN"}
 ```
 
 ```json
-{"auth_session":{"user":{"email":"account@example.com"},"refreshToken":"..."}}
+{"user":{"email":"account@example.com"},"refresh_token":"YOUR_REFRESH_TOKEN"}
+```
+
+```json
+{"auth_session":{"user":{"email":"account@example.com"},"sessionToken":"YOUR_SESSION_TOKEN"}}
+```
+
+Invalid examples:
+
+```json
+[{"email":"account@example.com","access_token":"TOKEN"}]
+```
+
+```json
+{"email":"account@example.com","cookie_header":"session=..."}
 ```
 
 **Import Mailboxes** is for fresh mailbox credentials used by a new registration. It only adds mailbox-pool rows; start **Register Accounts** separately. Mailbox rows are not OpenAI sessions. Example formats use fake values:

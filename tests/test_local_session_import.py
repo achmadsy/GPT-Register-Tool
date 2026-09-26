@@ -24,12 +24,12 @@ def test_imports_top_level_session_locally_without_echoing_tokens(tmp_path, monk
 
     result = local_session_import.import_local_sessions([str(source)], session_dir=destination)
 
-    assert result == {
-        "ok": True,
-        "imported": 1,
-        "skipped": 0,
-        "results": [{"file": "File 1", "status": "imported"}],
-    }
+    assert result["ok"] is True
+    assert result["imported"] == 1
+    assert result["skipped"] == 0
+    assert result["results"] == [{"file": "File 1", "status": "imported"}]
+    assert result["session_dir"] == str(destination)
+    assert result["database_path"]
     assert len(harness.saved) == 1
     payload, path = harness.saved[0]
     assert payload["email"] == "User@example.com"
@@ -89,3 +89,98 @@ def test_rejects_missing_email_or_token(tmp_path, monkeypatch):
     assert result["skipped"] == 2
     assert result["results"][0]["reason"] == "Missing valid account email"
     assert result["results"][1]["reason"] == "Missing access, refresh, or session token"
+
+
+def _write(tmp_path, name, payload):
+    path = tmp_path / name
+    path.write_text(json.dumps(payload), encoding="utf-8")
+    return str(path)
+
+
+def _install_harness(monkeypatch):
+    harness = ImportHarness()
+    monkeypatch.setattr(local_session_import, "get_account_record", lambda *args, **kwargs: {})
+    monkeypatch.setattr(local_session_import, "upsert_account", harness.upsert)
+    return harness
+
+
+def test_accepts_every_documented_email_and_token_alias(tmp_path, monkeypatch):
+    cases = [
+        {"email": "a@example.com", "access_token": "at"},
+        {"email": "b@example.com", "accessToken": "at"},
+        {"user": {"email": "c@example.com"}, "oauth_refresh_token": "rt"},
+        {"auth_session": {"email": "d@example.com", "refresh_token": "rt"}},
+        {"auth_session": {"user": {"email": "e@example.com"}, "refreshToken": "rt"}},
+        {"email": "f@example.com", "session_token": "st"},
+        {"email": "g@example.com", "auth_session": {"sessionToken": "st"}},
+    ]
+    paths = [_write(tmp_path, f"case{i}.json", payload) for i, payload in enumerate(cases)]
+    harness = _install_harness(monkeypatch)
+
+    result = local_session_import.import_local_sessions(paths, session_dir=tmp_path / "sessions")
+
+    assert result["imported"] == len(cases)
+    assert result["skipped"] == 0
+    emails = {payload["email"] for payload, _ in harness.saved}
+    assert emails == {"a@example.com", "b@example.com", "c@example.com", "d@example.com", "e@example.com", "f@example.com", "g@example.com"}
+
+
+def test_rejects_array_and_cookie_only_shapes_without_leaking(tmp_path, monkeypatch):
+    array_file = tmp_path / "array.json"
+    array_file.write_text(json.dumps([{"email": "a@example.com", "access_token": "at"}]), encoding="utf-8")
+    cookie_file = _write(tmp_path, "cookie.json", {"email": "cookie@example.com", "cookie_header": "session=abc"})
+    _install_harness(monkeypatch)
+
+    result = local_session_import.import_local_sessions(
+        [str(array_file), cookie_file], session_dir=tmp_path / "sessions"
+    )
+
+    assert result["imported"] == 0
+    assert result["skipped"] == 2
+    assert result["results"][0]["reason"] == "Expected a single session JSON object, not an array; select one account per file"
+    assert result["results"][1]["reason"] == "Missing access, refresh, or session token"
+
+
+def test_rejects_whitespace_email(tmp_path, monkeypatch):
+    path = _write(tmp_path, "ws.json", {"email": "bad email@example.com", "access_token": "at"})
+    _install_harness(monkeypatch)
+
+    result = local_session_import.import_local_sessions([path], session_dir=tmp_path / "sessions")
+
+    assert result["imported"] == 0
+    assert result["results"][0]["reason"] == "Missing valid account email"
+
+
+def test_database_duplicate_is_skipped(tmp_path, monkeypatch):
+    path = _write(tmp_path, "dupe.json", {"email": "dupe@example.com", "access_token": "at"})
+    monkeypatch.setattr(local_session_import, "get_account_record", lambda *args, **kwargs: {"email": "dupe@example.com"})
+    harness = ImportHarness()
+    monkeypatch.setattr(local_session_import, "upsert_account", harness.upsert)
+
+    result = local_session_import.import_local_sessions([path], session_dir=tmp_path / "sessions")
+
+    assert result["imported"] == 0
+    assert result["skipped"] == 1
+    assert result["results"][0]["reason"] == "Account already exists"
+    assert harness.saved == []
+
+
+def test_persists_canonical_file_and_reports_storage_paths(tmp_path, monkeypatch):
+    path = _write(tmp_path, "ok.json", {"email": "store@example.com", "access_token": "at-secret"})
+    harness = _install_harness(monkeypatch)
+    destination = tmp_path / "sessions"
+
+    result = local_session_import.import_local_sessions([path], session_dir=destination)
+
+    assert result["imported"] == 1
+    assert result["session_dir"] == str(destination)
+    assert result["database_path"]
+    files = list(destination.glob("session_import_*.json"))
+    assert len(files) == 1
+    stored = json.loads(files[0].read_text(encoding="utf-8"))
+    assert stored["email"] == "store@example.com"
+    assert stored["source"] == "local_session_import"
+    assert stored["status"] == "imported"
+    assert stored["registration_state"] == "active"
+    # Path metadata is safe to surface, token values are not.
+    assert "at-secret" not in json.dumps(result)

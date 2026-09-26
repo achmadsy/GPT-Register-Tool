@@ -11,7 +11,7 @@ from typing import Any
 
 from ..config import ConfigInput
 from ..paths import output_dir
-from ..storage import get_account_record, upsert_account
+from ..storage import database_path, get_account_record, upsert_account
 
 
 def _text(value: Any) -> str:
@@ -19,6 +19,8 @@ def _text(value: Any) -> str:
 
 
 def _session_payload(data: Any) -> dict[str, Any]:
+    if isinstance(data, list):
+        raise ValueError("Expected a single session JSON object, not an array; select one account per file")
     if not isinstance(data, dict):
         raise ValueError("Expected a single session JSON object")
     auth = data.get("auth_session") if isinstance(data.get("auth_session"), dict) else {}
@@ -109,9 +111,20 @@ def import_local_sessions(paths: list[str], *, runtime_config: ConfigInput = Non
             skipped += 1
             # Never echo untrusted exception text: it can contain session contents.
             reason = str(exc) if isinstance(exc, ValueError) and str(exc) in {
-                "Expected a single session JSON object", "Missing valid account email",
+                "Expected a single session JSON object",
+                "Expected a single session JSON object, not an array; select one account per file",
+                "Missing valid account email",
                 "Missing access, refresh, or session token", "Session file already exists",
                 "Could not save account",
             } else "Unreadable or invalid JSON file"
             results.append({"file": label, "status": "skipped", "reason": reason})
-    return {"ok": imported > 0, "imported": imported, "skipped": skipped, "results": results}
+    return {
+        "ok": imported > 0,
+        "imported": imported,
+        "skipped": skipped,
+        "results": results,
+        # Safe path metadata so the desktop can show (and cross-check) where
+        # imported sessions and the SQLite index live. Paths only, no tokens.
+        "session_dir": str(destination),
+        "database_path": str(database_path(runtime_config)),
+    }

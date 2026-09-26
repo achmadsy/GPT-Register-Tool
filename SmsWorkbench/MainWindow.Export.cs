@@ -24,9 +24,21 @@ namespace SmsWorkbench
             var plan = BackendCommandPlanner.CreateLocalSessionImport(picker.FileNames);
             try
             {
-                await RunBackendWithResultAsync(plan.TaskName, plan.Arguments.ToList());
-                RefreshPools();
-                ShowThemedInfoDialog("Import complete", "Existing account sessions were imported locally. Select an account to inspect it; importing does not register it again. Check task output for imported/skipped counts.");
+                string json = await RunBackendWithResultAsync(plan.TaskName, plan.Arguments.ToList());
+                var summary = LocalSessionImportSummary.Format(json);
+                if (summary == null)
+                {
+                    ShowThemedInfoDialog("Import failed", "The backend did not return a recognizable import result. Check the log below for details.");
+                    return;
+                }
+                // Await the refresh so the dialog reflects the grid the operator
+                // sees next, instead of racing a fire-and-forget rebuild.
+                await RefreshPoolsAsync(ct: _lifetimeCts.Token);
+                ShowThemedInfoDialog(
+                    summary.Imported > 0 ? "Import complete" : "Import failed",
+                    summary.Message
+                        + Environment.NewLine + Environment.NewLine
+                        + "Importing is local only: it does not log in, register, or refresh the account.");
             }
             catch (Exception ex)
             {
