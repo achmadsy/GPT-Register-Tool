@@ -134,7 +134,7 @@ public sealed class DesktopWindowSmokeTests
         SettingsWindow settings,
         SettingsViewModel viewModel)
     {
-        SettingsCategoryViewModel networkCategory = viewModel.Categories.Single(category => category.Title == "网络与支付");
+        SettingsCategoryViewModel networkCategory = viewModel.Categories.Single(category => category.Title == "Network & Payment");
         string proxyLines = string.Join(
             Environment.NewLine,
             Enumerable.Range(1, 12).Select(index => $"http://proxy-{index:D2}-{new string('x', 90)}.example:8080"));
@@ -194,7 +194,7 @@ public sealed class DesktopWindowSmokeTests
             Assert.True(contentBounds.Right <= verticalBounds.Left + 0.5);
         }
 
-        SettingsCategoryViewModel registrationCategory = viewModel.Categories.Single(category => category.Title == "注册与接码");
+        SettingsCategoryViewModel registrationCategory = viewModel.Categories.Single(category => category.Title == "Registration & SMS");
         viewModel.SelectedCategory = registrationCategory;
         settings.UpdateLayout();
         var driverEditor = FindVisualChildren<ComboBox>(settings)
@@ -268,11 +268,11 @@ public sealed class DesktopWindowSmokeTests
             var accountGrid = Assert.IsType<DataGrid>(main.FindName("AccountGrid"));
             Assert.DoesNotContain(
                 FindVisualChildren<TextBlock>(main),
-                textBlock => textBlock.Text == "重新生成支付链接");
+                textBlock => textBlock.Text == "Regenerate payment link");
             string[] headers = accountGrid.Columns.Select(column => column.Header?.ToString() ?? "").ToArray();
             Assert.DoesNotContain("ID", headers);
-            Assert.DoesNotContain("注册批次", headers);
-            Assert.DoesNotContain("入库", headers);
+            Assert.DoesNotContain("Registration batch", headers);
+            Assert.DoesNotContain("Imported", headers);
             DataGridColumn[] equalWidthColumns = accountGrid.Columns
                 .Where(column => new[] { "Status", "AT", "RT", "2FA" }.Contains(column.Header?.ToString() ?? ""))
                 .ToArray();
@@ -283,7 +283,7 @@ public sealed class DesktopWindowSmokeTests
                 column => (column.Header?.ToString() ?? "") == "Promotion");
             Assert.True(promotionColumn.CanUserSort);
             Assert.Equal("PromotionStatus", promotionColumn.SortMemberPath);
-            Assert.DoesNotContain("支付方式", headers);
+            Assert.DoesNotContain("Payment method", headers);
 
             var contextMenu = Assert.IsType<ContextMenu>(accountGrid.ContextMenu);
             contextMenu.PlacementTarget = accountGrid;
@@ -346,21 +346,21 @@ public sealed class DesktopWindowSmokeTests
                 });
             Assert.Equal(new[]
             {
-                "ReMail 邮箱",
-                "Smailr 邮箱",
-                "Outlook/Hotmail/iCloud 邮箱池",
-                "CF Worker 域名邮箱",
-                "手机号注册"
+                "ReMail mailbox",
+                "Smailr mailbox",
+                "Outlook/Hotmail/iCloud pool",
+                "CF Worker domain mailbox",
+                "Phone registration"
             }, sourceOptions);
             Assert.DoesNotContain(sourceOptions, option => option.Contains("📱", StringComparison.Ordinal));
             Assert.DoesNotContain("liziai.cloud (CFWorker)", sourceOptions);
-            Assert.DoesNotContain("邮箱采购上限", fieldLabels);
-            Assert.DoesNotContain("最大采购成本", fieldLabels);
-            Assert.DoesNotContain("注册批次 ID", fieldLabels);
-            Assert.DoesNotContain("生链方式", fieldLabels);
-            Assert.DoesNotContain("只注册，不生成支付链接", checkBoxLabels);
-            Assert.Contains("关闭 2FA（不注册 TOTP）", checkBoxLabels);
-            Assert.Contains("注册完成后查询试用优惠", checkBoxLabels);
+            Assert.DoesNotContain("Mailbox purchase cap", fieldLabels);
+            Assert.DoesNotContain("Max purchase cost", fieldLabels);
+            Assert.DoesNotContain("Registration batch ID", fieldLabels);
+            Assert.DoesNotContain("Link generation mode", fieldLabels);
+            Assert.DoesNotContain("Register only (skip payment link)", checkBoxLabels);
+            Assert.Contains("Disable 2FA (do not enroll TOTP)", checkBoxLabels);
+            Assert.Contains("Check trial promotion after registration", checkBoxLabels);
             Assert.Equal(1, comboBoxCount);
 
             stage("show selected registration dialog");
@@ -391,7 +391,7 @@ public sealed class DesktopWindowSmokeTests
             Assert.Equal(2, selectedCheckBoxCount);
             // checkedCount(3) > usable(1) must surface the local-exclusion count
             // (added 2026-09-19; see docs/audits/scan-2026-09-19-selected-22-vs-reported-3of6.md).
-            Assert.Contains(selectedDialogTexts, text => text.Contains("本地排除 2 个", StringComparison.Ordinal));
+            Assert.Contains(selectedDialogTexts, text => text.Contains("2 excluded locally", StringComparison.Ordinal));
             stage("verify mailbox selection routing");
             VerifyMailboxSelectionFileRouting(main);
         }
@@ -457,12 +457,12 @@ public sealed class DesktopWindowSmokeTests
         };
 
         string formatted = Assert.IsType<string>(formatter.Invoke(main, new object[] { results, summary }));
-        Assert.Contains("总数：5", formatted);
-        Assert.Contains("AT有效：1", formatted);
-        Assert.Contains("AT失效：1", formatted);
-        Assert.Contains("账号停用：2", formatted);
-        Assert.Contains("其他失败：1", formatted);
-        Assert.Contains("确认停用：1", formatted);
+        Assert.Contains("Total: 5", formatted);
+        Assert.Contains("AT valid: 1", formatted);
+        Assert.Contains("AT invalid: 1", formatted);
+        Assert.Contains("Deactivated: 2", formatted);
+        Assert.Contains("Other failures: 1", formatted);
+        Assert.Contains("Confirmed deactivated: 1", formatted);
     }
 
     private static void VerifyMailboxSelectionFileRouting(MainWindow main)

@@ -88,8 +88,8 @@ namespace SmsWorkbench
 
         private void ShowEmailSelectionRequired(string action)
         {
-            string detail = string.IsNullOrWhiteSpace(action) ? "执行此操作" : action.Trim();
-            ShowThemedInfoDialog("未选择邮箱", $"请先勾选或选择邮箱账号后再{detail}。");
+            string detail = string.IsNullOrWhiteSpace(action) ? "perform this action" : action.Trim();
+            ShowThemedInfoDialog("No mailbox selected", $"Select or check a mailbox account first, then {detail}.");
         }
 
         private List<PoolRow> SelectedRowsOrCurrent()

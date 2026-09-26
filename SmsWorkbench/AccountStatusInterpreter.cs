@@ -166,36 +166,36 @@ namespace SmsWorkbench
             bool hasRt = refreshTokenStatus.Equals("oauth_present", StringComparison.OrdinalIgnoreCase)
                 || refreshTokenStatus.Equals("legacy_present", StringComparison.OrdinalIgnoreCase);
             if (status.Equals("account_deactivated", StringComparison.OrdinalIgnoreCase)
-                || LooksAccountDeactivatedError(error)) return "账号掉号";
-            if (hasRt && LooksPhoneVerificationError(error)) return "手机验证";
+                || LooksAccountDeactivatedError(error)) return "Deactivated";
+            if (hasRt && LooksPhoneVerificationError(error)) return "Phone verification";
             if (status.Equals("at_invalid", StringComparison.OrdinalIgnoreCase)
                 || status.Equals("access_token_invalid", StringComparison.OrdinalIgnoreCase)
                 || status.Equals("token_invalidated", StringComparison.OrdinalIgnoreCase)
-                || LooksAtInvalidError(error)) return "AT失效";
-            if (status.Equals("k12_left", StringComparison.OrdinalIgnoreCase)) return "K12已退出";
-            if (status.Equals("k12_joined", StringComparison.OrdinalIgnoreCase)) return "K12已进入✅";
-            if (status.Equals("k12_requested", StringComparison.OrdinalIgnoreCase)) return "K12已申请";
-            if (status.Equals("k12_verify_failed", StringComparison.OrdinalIgnoreCase)) return "K12未切换";
-            if (paypalStatus.Equals("completed", StringComparison.OrdinalIgnoreCase)) return "支付完成✅";
+                || LooksAtInvalidError(error)) return "AT invalid";
+            if (status.Equals("k12_left", StringComparison.OrdinalIgnoreCase)) return "K12 exited";
+            if (status.Equals("k12_joined", StringComparison.OrdinalIgnoreCase)) return "K12 joined ✅";
+            if (status.Equals("k12_requested", StringComparison.OrdinalIgnoreCase)) return "K12 requested";
+            if (status.Equals("k12_verify_failed", StringComparison.OrdinalIgnoreCase)) return "K12 not switched";
+            if (paypalStatus.Equals("completed", StringComparison.OrdinalIgnoreCase)) return "Payment completed ✅";
             if (paypalStatus.Equals("pm_created", StringComparison.OrdinalIgnoreCase)
-                || status.Equals("paypal_pm_created", StringComparison.OrdinalIgnoreCase)) return "PM已创建✅";
-            if (status.Equals("paypal_failed", StringComparison.OrdinalIgnoreCase) || paypalStatus.Equals("failed", StringComparison.OrdinalIgnoreCase)) return "支付链接失败";
+                || status.Equals("paypal_pm_created", StringComparison.OrdinalIgnoreCase)) return "PM created ✅";
+            if (status.Equals("paypal_failed", StringComparison.OrdinalIgnoreCase) || paypalStatus.Equals("failed", StringComparison.OrdinalIgnoreCase)) return "Payment link failed";
             if (paypalStatus.Equals("manual_confirmation_required", StringComparison.OrdinalIgnoreCase)
                 || paypalStatus.Equals("link_ready", StringComparison.OrdinalIgnoreCase)
                 || paypalOk == "1"
-                || status.Equals("paypal_ready", StringComparison.OrdinalIgnoreCase)) return "待支付";
+                || status.Equals("paypal_ready", StringComparison.OrdinalIgnoreCase)) return "Pending payment";
             // Probe-level failure vocabulary produced by Python
             // ``store/normalize._status``. These MUST come before the
             // "已注册" fallback below: a network/rate-limit failure still has
             // a refresh token and an access token, so without these branches
             // the row is displayed as a healthy account.
-            if (status.Equals("network_failed", StringComparison.OrdinalIgnoreCase)) return "网络失败";
-            if (status.Equals("mailbox_failed", StringComparison.OrdinalIgnoreCase)) return "邮箱失败";
-            if (status.Equals("auth_state_failed", StringComparison.OrdinalIgnoreCase)) return "会话失效";
-            if (status.Equals("rate_limited", StringComparison.OrdinalIgnoreCase)) return "限流";
-            if (hasRt && access.Length > 0) return "已注册";
-            if (!string.IsNullOrWhiteSpace(error) || status.Equals("failed", StringComparison.OrdinalIgnoreCase)) return "失败";
-            return access.Length > 0 ? "已注册" : "待处理";
+            if (status.Equals("network_failed", StringComparison.OrdinalIgnoreCase)) return "Network failed";
+            if (status.Equals("mailbox_failed", StringComparison.OrdinalIgnoreCase)) return "Mailbox failed";
+            if (status.Equals("auth_state_failed", StringComparison.OrdinalIgnoreCase)) return "Session invalid";
+            if (status.Equals("rate_limited", StringComparison.OrdinalIgnoreCase)) return "Rate limited";
+            if (hasRt && access.Length > 0) return "Registered";
+            if (!string.IsNullOrWhiteSpace(error) || status.Equals("failed", StringComparison.OrdinalIgnoreCase)) return "Failed";
+            return access.Length > 0 ? "Registered" : "Pending";
         }
 
         public static bool LooksAtInvalidError(string error)
@@ -228,10 +228,10 @@ namespace SmsWorkbench
         public static string DisplayPayPalStatus(string paypalStatus, string paypalOk, string paypalUrl, string paymentMethod = "")
         {
             string prefix = PaymentMethods.Normalize(paymentMethod) == "paypal" ? "" : PaymentMethods.DisplayName(paymentMethod) + " ";
-            if (paypalStatus.Equals("completed", StringComparison.OrdinalIgnoreCase)) return prefix + "支付完成✅";
-            if (paypalStatus.Equals("pm_created", StringComparison.OrdinalIgnoreCase)) return prefix + "PM已创建✅";
-            if (paypalStatus.Equals("failed", StringComparison.OrdinalIgnoreCase)) return prefix + "支付失败";
-            if (paypalStatus.Equals("otp_required", StringComparison.OrdinalIgnoreCase)) return prefix + "待输入OTP";
+            if (paypalStatus.Equals("completed", StringComparison.OrdinalIgnoreCase)) return prefix + "Payment completed ✅";
+            if (paypalStatus.Equals("pm_created", StringComparison.OrdinalIgnoreCase)) return prefix + "PM created ✅";
+            if (paypalStatus.Equals("failed", StringComparison.OrdinalIgnoreCase)) return prefix + "Payment failed";
+            if (paypalStatus.Equals("otp_required", StringComparison.OrdinalIgnoreCase)) return prefix + "OTP required";
             if (paypalStatus.Equals("manual_confirmation_required", StringComparison.OrdinalIgnoreCase)) return PaymentPendingStatus(paymentMethod);
             if (paypalStatus.Equals("link_ready", StringComparison.OrdinalIgnoreCase)) return PaymentPendingStatus(paymentMethod);
             if (paypalOk == "1" && !string.IsNullOrWhiteSpace(paypalUrl)) return PaymentPendingStatus(paymentMethod);
@@ -241,7 +241,7 @@ namespace SmsWorkbench
 
         public static string PaymentPendingStatus(string paymentMethod)
         {
-            return PaymentMethods.DisplayName(paymentMethod) + "待支付";
+            return PaymentMethods.DisplayName(paymentMethod) + " pending payment";
         }
 
         /// <summary>
@@ -266,8 +266,8 @@ namespace SmsWorkbench
             string value = (refreshTokenStatus ?? "").Trim();
             return value.Equals("oauth_present", StringComparison.OrdinalIgnoreCase)
                 || value.Equals("legacy_present", StringComparison.OrdinalIgnoreCase)
-                ? "已获取"
-                : "未获取";
+                ? "Present"
+                : "Absent";
         }
 
         public static string GetImportedStatus(string rawJson)
@@ -287,9 +287,9 @@ namespace SmsWorkbench
         {
             bool cpaImported = IsImportOk(data, "cpa_import");
             bool sub2Imported = IsImportOk(data, "sub2api_import");
-            if (cpaImported && sub2Imported) return "已导入CPA/SUB2";
-            if (cpaImported) return "已导入CPA";
-            if (sub2Imported) return "已导入SUB2";
+            if (cpaImported && sub2Imported) return "Imported CPA/SUB2";
+            if (cpaImported) return "Imported CPA";
+            if (sub2Imported) return "Imported SUB2";
             return "";
         }
 

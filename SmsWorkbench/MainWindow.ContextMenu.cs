@@ -50,11 +50,11 @@ namespace SmsWorkbench
                 try
                 {
                     Clipboard.SetText(row.Identifier);
-                    NotifyInfo("邮箱已复制：" + row.Identifier);
+                    NotifyInfo("Email copied: " + row.Identifier);
                 }
                 catch (Exception ex)
                 {
-                    Log("复制邮箱失败：" + ex.Message);
+                    Log("Copy email failed: " + ex.Message);
                 }
             }
         }
@@ -66,23 +66,23 @@ namespace SmsWorkbench
         {
             if (AccountGrid?.SelectedItem is not PoolRow row)
             {
-                NotifyWarning("请先选择一个账号。");
+                NotifyWarning("Select an account first.");
                 return;
             }
             string accessToken = await ResolveAccountAccessTokenAsync(row);
             if (string.IsNullOrWhiteSpace(accessToken))
             {
-                NotifyWarning("当前选中账号没有可复制的 AT。");
+                NotifyWarning("Selected account has no AT to copy.");
                 return;
             }
             try
             {
                 Clipboard.SetText(accessToken);
-                NotifyInfo("AT 已复制。");
+                NotifyInfo("AT copied.");
             }
             catch (Exception ex)
             {
-                Log("复制 AT 失败：" + ex.Message);
+                Log("Copy AT failed: " + ex.Message);
             }
         }
 
@@ -94,7 +94,7 @@ namespace SmsWorkbench
             }
             else
             {
-                NotifyWarning("当前选中行无支付链接。");
+                NotifyWarning("Selected row has no payment link.");
             }
         }
 
@@ -106,7 +106,7 @@ namespace SmsWorkbench
             }
             else
             {
-                NotifyWarning("当前选中行无支付链接。");
+                NotifyWarning("Selected row has no payment link.");
             }
         }
 
@@ -123,7 +123,7 @@ namespace SmsWorkbench
         {
             if (AccountGrid?.SelectedItem is not PoolRow row || string.IsNullOrWhiteSpace(row.Identifier))
             {
-                NotifyWarning("请先选择一个账号。");
+                NotifyWarning("Select an account first.");
                 return;
             }
             await CheckAccountAliveAsync(row);
@@ -145,7 +145,7 @@ namespace SmsWorkbench
             var rows = SelectedRowsOrCurrent().Where(row => row != null && !string.IsNullOrWhiteSpace(row.Identifier)).ToList();
             if (rows.Count == 0)
             {
-                NotifyWarning("请先选择要换绑的账号。");
+                NotifyWarning("Select an account to change email first.");
                 return;
             }
             var options = ChangeEmailDialogService.Show(
@@ -171,12 +171,12 @@ namespace SmsWorkbench
             {
                 using var doc = JsonDocument.Parse(json);
                 bool ok = doc.RootElement.TryGetProperty("ok", out var okEl) && okEl.GetBoolean();
-                await DialogFactory.ShowInfoAsync(this, "邮箱换绑", ok ? "邮箱换绑完成。" : "邮箱换绑部分失败，请查看任务结果。 ");
+                await DialogFactory.ShowInfoAsync(this, "Change Email", ok ? "Email change completed." : "Email change partially failed. Check the task result.");
                 RefreshPools();
             }
             catch
             {
-                await DialogFactory.ShowInfoAsync(this, "邮箱换绑", "未收到有效结果，请查看运行日志。");
+                await DialogFactory.ShowInfoAsync(this, "Change Email", "No valid result received. Check the run log.");
             }
         }
 
@@ -184,26 +184,26 @@ namespace SmsWorkbench
         {
             if (row == null || string.IsNullOrWhiteSpace(row.Identifier))
             {
-                NotifyWarning("请先选择一个账号。");
+                NotifyWarning("Select an account first.");
                 return;
             }
 
             if (!row.HasAccessToken)
             {
-                await DialogFactory.ShowInfoAsync(this, "账号测活", "该账号未获取 Access Token，无法测活。请先登录获取 AT。");
+                await DialogFactory.ShowInfoAsync(this, "Account Check", "This account has no Access Token and cannot be checked. Sign in first to obtain an AT.");
                 return;
             }
 
             try
             {
-                Log($"正在进行账号测活：{row.Identifier}");
+                Log($"Checking account: {row.Identifier}");
                 var args = new List<string> { "--quota-usage", "--email", row.Identifier, "--refresh-timeout", "45" };
                 AddRegistrationProxy(args);
-                string json = await RunBackendWithResultAsync("账号测活", args, 120000, ct);
+                string json = await RunBackendWithResultAsync("Account check", args, 120000, ct);
 
                 if (string.IsNullOrWhiteSpace(json))
                 {
-                    await DialogFactory.ShowInfoAsync(this, "账号测活", "账号测活失败：未收到有效响应。");
+                    await DialogFactory.ShowInfoAsync(this, "Account Check", "Account check failed: no valid response received.");
                     return;
                 }
 
@@ -213,28 +213,28 @@ namespace SmsWorkbench
                 if (root.TryGetProperty("ok", out var okEl) && okEl.GetBoolean())
                 {
                     string detail = FormatAccountLivenessDetail(root);
-                    await DialogFactory.ShowInfoAsync(this, $"账号测活：{row.Identifier}", detail);
-                    Log($"账号测活成功：{row.Identifier} → AT 有效");
+                    await DialogFactory.ShowInfoAsync(this, $"Account Check: {row.Identifier}", detail);
+                    Log($"Account check succeeded: {row.Identifier} → AT valid");
                     RefreshPools();
                 }
                 else
                 {
-                    string error = root.TryGetProperty("error", out var errEl) ? SensitiveDataSanitizer.Redact(errEl.GetString() ?? "未知错误") : "未知错误";
+                    string error = root.TryGetProperty("error", out var errEl) ? SensitiveDataSanitizer.Redact(errEl.GetString() ?? "Unknown error") : "Unknown error";
                     string status = root.TryGetProperty("status", out var stEl) ? stEl.GetString() ?? "" : "";
                     string failureClass = root.TryGetProperty("failure_class", out var fcEl) ? fcEl.GetString() ?? "" : "";
-                    string msg = $"测活失败：{error}";
+                    string msg = $"Account check failed: {error}";
                     if (failureClass.Length > 0)
-                        msg += $"\n失败分类：{failureClass}";
+                        msg += $"\nFailure class: {failureClass}";
                     if (status == "token_invalid")
-                        msg += "\n\n接口返回 HTTP 401，当前 Access Token 已失效。";
-                    await DialogFactory.ShowInfoAsync(this, $"账号测活：{row.Identifier}", msg);
-                    Log($"账号测活失败：{row.Identifier} → {error} failure_class={failureClass}");
+                        msg += "\n\nThe endpoint returned HTTP 401; the current Access Token has expired.";
+                    await DialogFactory.ShowInfoAsync(this, $"Account Check: {row.Identifier}", msg);
+                    Log($"Account check failed: {row.Identifier} → {error} failure_class={failureClass}");
                 }
             }
             catch (Exception ex)
             {
-                Log($"账号测活异常：{ex.Message}");
-                    await DialogFactory.ShowInfoAsync(this, "账号测活", $"测活异常：{SensitiveDataSanitizer.Redact(ex.Message)}");
+                Log($"Account check error: {ex.Message}");
+                    await DialogFactory.ShowInfoAsync(this, "Account Check", $"Account check error: {SensitiveDataSanitizer.Redact(ex.Message)}");
             }
         }
 
@@ -242,8 +242,8 @@ namespace SmsWorkbench
         {
             var sb = new StringBuilder();
             string statusCode = root.TryGetProperty("status_code", out var codeEl) ? codeEl.ToString() : "";
-            sb.AppendLine("状态：AT 有效");
-            sb.AppendLine("接口：HTTP " + (string.IsNullOrWhiteSpace(statusCode) ? "200" : statusCode));
+            sb.AppendLine("Status: AT valid");
+            sb.AppendLine("Endpoint: HTTP " + (string.IsNullOrWhiteSpace(statusCode) ? "200" : statusCode));
             return sb.ToString().TrimEnd();
         }
     }

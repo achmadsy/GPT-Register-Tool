@@ -19,10 +19,10 @@ namespace SmsWorkbench
         {
             if (SidebarToggleButton != null)
             {
-                SidebarToggleButton.ToolTip = compact ? "展开侧边栏" : "收起侧边栏";
+                SidebarToggleButton.ToolTip = compact ? "Expand sidebar" : "Collapse sidebar";
             }
 
-            SidebarToggleGlyph = compact ? "展开" : "收起";
+            SidebarToggleGlyph = compact ? "Expand" : "Collapse";
             SidebarToggleGeometry = Geometry.Parse(compact
                 ? "M5 4H19A1 1 0 0 1 20 5V19A1 1 0 0 1 19 20H5A1 1 0 0 1 4 19V5A1 1 0 0 1 5 4Z M14 4V20"
                 : "M5 4H19A1 1 0 0 1 20 5V19A1 1 0 0 1 19 20H5A1 1 0 0 1 4 19V5A1 1 0 0 1 5 4Z M10 4V20");

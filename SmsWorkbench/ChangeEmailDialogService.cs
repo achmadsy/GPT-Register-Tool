@@ -16,11 +16,11 @@ internal static class ChangeEmailDialogService
     private static readonly (string Label, string Value)[] Providers =
     {
         ("ReMail", "remail"),
-        ("CF Worker 域名邮箱", "cfworker"),
+        ("CF Worker domain mailbox", "cfworker"),
         ("Smailr", "smailr"),
-        ("iCloud 邮箱池", "icloud"),
-        ("Outlook 邮箱池", "outlook"),
-        ("Hotmail 邮箱池", "hotmail"),
+        ("iCloud mailbox pool", "icloud"),
+        ("Outlook mailbox pool", "outlook"),
+        ("Hotmail mailbox pool", "hotmail"),
     };
 
     public static ChangeEmailDialogOptions? Show(
@@ -45,12 +45,12 @@ internal static class ChangeEmailDialogService
             Margin = new Thickness(0, 0, 0, 10),
         };
         var fileBox = new TextBox { Width = 210, Margin = new Thickness(0, 0, 8, 10) };
-        var browse = new Button { Content = "选择凭证文件", Margin = new Thickness(0, 0, 0, 10) };
+        var browse = new Button { Content = "Browse credential file", Margin = new Thickness(0, 0, 0, 10) };
         browse.Click += (_, _) =>
         {
             var dialog = new Microsoft.Win32.OpenFileDialog
             {
-                Filter = "文本文件 (*.txt)|*.txt|所有文件 (*.*)|*.*",
+                Filter = "Text files (*.txt)|*.txt|All files (*.*)|*.*",
             };
             if (dialog.ShowDialog() == true)
             {
@@ -61,13 +61,13 @@ internal static class ChangeEmailDialogService
         var root = new StackPanel { Margin = new Thickness(20) };
         root.Children.Add(new TextBlock
         {
-            Text = $"目标邮箱 provider（{count} 个账号）",
+            Text = $"Target mailbox provider ({count} accounts)",
             Margin = new Thickness(0, 0, 0, 6),
         });
         root.Children.Add(providerBox);
-        root.Children.Add(new TextBlock { Text = "并发数" });
+        root.Children.Add(new TextBlock { Text = "Workers" });
         root.Children.Add(workerBox);
-        root.Children.Add(new TextBlock { Text = "iCloud/Outlook/Hotmail 需提供等量凭证文件" });
+        root.Children.Add(new TextBlock { Text = "iCloud/Outlook/Hotmail require an equal-size credential file" });
 
         var fileRow = new StackPanel { Orientation = Orientation.Horizontal };
         fileRow.Children.Add(fileBox);
@@ -79,10 +79,10 @@ internal static class ChangeEmailDialogService
             Orientation = Orientation.Horizontal,
             HorizontalAlignment = HorizontalAlignment.Right,
         };
-        var ok = new Button { Content = "开始", Width = 80, IsDefault = true };
+        var ok = new Button { Content = "Start", Width = 80, IsDefault = true };
         var cancel = new Button
         {
-            Content = "取消",
+            Content = "Cancel",
             Width = 80,
             IsCancel = true,
             Margin = new Thickness(8, 0, 0, 0),
@@ -93,7 +93,7 @@ internal static class ChangeEmailDialogService
 
         var dialogWindow = DialogFactory.Create(
             owner,
-            "邮箱换绑",
+            "Change Email",
             460,
             360,
             minWidth: 440,

@@ -39,8 +39,8 @@ namespace SmsWorkbench
         // the old string concatenation had exactly the same contract.
         private readonly System.Text.StringBuilder _logBuffer = new();
         internal const int MaxLogBufferChars = 1_000_000;
-        private string statusText = "就绪";
-        private string pageStatusText = "第 0/0 页";
+        private string statusText = "Ready";
+        private string pageStatusText = "Page 0/0";
         private string totalCountText = "0";
         private string trialCountText = "0";
         private string registeredCountText = "0";
@@ -339,7 +339,7 @@ namespace SmsWorkbench
         // (sms_tool/promotion_states.py); the label above is display copy.
         public string PromotionState { get; set; } = "";
         public string RefreshTokenStatus { get; set; } = "";
-        public string TwoFactorStatus { get; set; } = "未设置";
+        public string TwoFactorStatus { get; set; } = "Not set";
         public string Phone { get; set; } = "";
         public bool HasAccessToken { get; set; }
         public string AccessTokenProbeStatusCode { get; set; } = "";
@@ -398,10 +398,10 @@ namespace SmsWorkbench
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
         {
             string s = (value as string ?? "").Trim();
-            if (s.Equals("oauth_present", StringComparison.OrdinalIgnoreCase)) return "已获取";
-            if (s.Equals("legacy_present", StringComparison.OrdinalIgnoreCase)) return "旧Token";
-            if (s.Equals("no_rt", StringComparison.OrdinalIgnoreCase)) return "无RT";
-            if (s.Equals("missing", StringComparison.OrdinalIgnoreCase)) return "缺失";
+            if (s.Equals("oauth_present", StringComparison.OrdinalIgnoreCase)) return "Present";
+            if (s.Equals("legacy_present", StringComparison.OrdinalIgnoreCase)) return "Legacy RT";
+            if (s.Equals("no_rt", StringComparison.OrdinalIgnoreCase)) return "No RT";
+            if (s.Equals("missing", StringComparison.OrdinalIgnoreCase)) return "Missing";
             return s.Length > 0 ? s : "—";
         }
 

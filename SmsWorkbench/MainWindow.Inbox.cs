@@ -14,7 +14,7 @@ namespace SmsWorkbench
         {
             var dialog = new Window
             {
-                Title = "收件箱 - " + row.Identifier,
+                Title = "Inbox - " + row.Identifier,
                 Owner = this,
                 Width = 860,
                 Height = 640,
@@ -35,7 +35,7 @@ namespace SmsWorkbench
             };
             var header = new TextBlock
             {
-                Text = "正在加载收件箱...",
+                Text = "Loading inbox...",
                 FontSize = 14,
                 FontWeight = FontWeights.SemiBold,
                 Foreground = (System.Windows.Media.Brush)FindResource("TextMain"),
@@ -57,9 +57,9 @@ namespace SmsWorkbench
                 Foreground = (System.Windows.Media.Brush)FindResource("TextMain"),
                 BorderThickness = new Thickness(0)
             };
-            mailGrid.Columns.Add(new DataGridTextColumn { Header = "时间", Binding = new System.Windows.Data.Binding("ReceivedAt"), Width = 150 });
-            mailGrid.Columns.Add(new DataGridTextColumn { Header = "发件人", Binding = new System.Windows.Data.Binding("From"), Width = 200 });
-            mailGrid.Columns.Add(new DataGridTextColumn { Header = "主题", Binding = new System.Windows.Data.Binding("Subject"), Width = new DataGridLength(1, DataGridLengthUnitType.Star) });
+            mailGrid.Columns.Add(new DataGridTextColumn { Header = "Time", Binding = new System.Windows.Data.Binding("ReceivedAt"), Width = 150 });
+            mailGrid.Columns.Add(new DataGridTextColumn { Header = "From", Binding = new System.Windows.Data.Binding("From"), Width = 200 });
+            mailGrid.Columns.Add(new DataGridTextColumn { Header = "Subject", Binding = new System.Windows.Data.Binding("Subject"), Width = new DataGridLength(1, DataGridLengthUnitType.Star) });
             Grid.SetRow(mailGrid, 1);
             root.Children.Add(mailGrid);
 
@@ -69,8 +69,8 @@ namespace SmsWorkbench
                 HorizontalAlignment = HorizontalAlignment.Right,
                 Margin = new Thickness(0, 8, 0, 0)
             };
-            var refreshBtn = new Button { Content = "刷新", Width = 72 };
-            var closeBtn = new Button { Content = "关闭", Width = 72 };
+            var refreshBtn = new Button { Content = "Refresh", Width = 72 };
+            var closeBtn = new Button { Content = "Close", Width = 72 };
             actions.Children.Add(refreshBtn);
             actions.Children.Add(closeBtn);
             Grid.SetRow(actions, 2);
@@ -85,7 +85,7 @@ namespace SmsWorkbench
             {
                 if (IsCfWorkerRow(row) || IsReMailRow(row) || IsSmailrRow(row))
                 {
-                    header.Text = IsReMailRow(row) ? "正在获取 ReMail 邮件..." : IsSmailrRow(row) ? "正在获取 Smailr 邮件..." : "正在获取 CFWorker 邮件...";
+                    header.Text = IsReMailRow(row) ? "Fetching ReMail messages..." : IsSmailrRow(row) ? "Fetching Smailr messages..." : "Fetching CFWorker messages...";
                     try
                     {
                         mailItems.Clear();
@@ -93,17 +93,17 @@ namespace SmsWorkbench
                         {
                             mailItems.Add(item);
                         }
-                        header.Text = row.Identifier + " - 最近 " + mailItems.Count + " 封邮件";
+                        header.Text = row.Identifier + " - " + mailItems.Count + " recent message(s)";
                     }
                     catch (Exception ex)
                     {
-                        header.Text = "获取邮件失败：" + ex.Message;
-                        Log((IsReMailRow(row) ? "ReMail" : IsSmailrRow(row) ? "Smailr" : "CFWorker") + "收件箱获取失败：" + ex.Message);
+                        header.Text = "Fetch failed: " + ex.Message;
+                        Log((IsReMailRow(row) ? "ReMail" : IsSmailrRow(row) ? "Smailr" : "CFWorker") + " inbox fetch failed: " + ex.Message);
                     }
                     return;
                 }
 
-                header.Text = "正在刷新令牌...";
+                header.Text = "Refreshing token...";
                 try
                 {
                     mailItems.Clear();
@@ -115,8 +115,8 @@ namespace SmsWorkbench
                 }
                 catch (Exception ex)
                 {
-                    header.Text = "加载失败：" + ex.Message;
-                    Log("收件箱加载异常：" + ex.Message);
+                    header.Text = "Load failed: " + ex.Message;
+                    Log("Inbox load error: " + ex.Message);
                 }
             }
 
@@ -159,7 +159,7 @@ namespace SmsWorkbench
             try
             {
                 BackendCommandResult result = await backendClient.RunAsync(
-                    BackendCommand.Create("查看收件箱", args, 120000, environment));
+                    BackendCommand.Create("View inbox", args, 120000, environment));
                 if (!result.Payload.HasValue)
                     throw new InvalidOperationException(BackendFailureMessage(result));
                 JsonElement payload = result.Payload.Value;
@@ -236,11 +236,11 @@ namespace SmsWorkbench
         {
             if (item == null) return;
             string content = MailBodyFormatter.ToDisplayText(item.Body, item.BodyPreview);
-            if (content.Length == 0) content = "（邮件正文为空）";
+            if (content.Length == 0) content = "(message body is empty)";
             string code = item.VerificationCode.Length > 0 ? item.VerificationCode : ExtractVerificationCode(content);
             var dialog = new Window
             {
-                Title = item.Subject.Length > 0 ? item.Subject : "邮件详情",
+                Title = item.Subject.Length > 0 ? item.Subject : "Message details",
                 Owner = this,
                 Width = 720,
                 Height = 460,
@@ -299,13 +299,13 @@ namespace SmsWorkbench
                 HorizontalAlignment = HorizontalAlignment.Right,
                 Margin = new Thickness(0, 10, 0, 0)
             };
-            var copyCodeBtn = new Button { Content = code.Length > 0 ? "复制验证码 " + code : "未识别验证码", MinWidth = 120, IsEnabled = code.Length > 0 };
-            var copyBodyBtn = new Button { Content = "复制正文", Width = 86 };
-            var closeBtn = new Button { Content = "关闭", Width = 72 };
+            var copyCodeBtn = new Button { Content = code.Length > 0 ? "Copy code " + code : "No code detected", MinWidth = 120, IsEnabled = code.Length > 0 };
+            var copyBodyBtn = new Button { Content = "Copy body", Width = 86 };
+            var closeBtn = new Button { Content = "Close", Width = 72 };
             copyCodeBtn.Click += (_, __) =>
             {
                 Clipboard.SetText(code);
-                Log("验证码已复制：" + code);
+                Log("Code copied: " + code);
             };
             copyBodyBtn.Click += (_, __) => Clipboard.SetText(content);
             closeBtn.Click += (_, __) => dialog.Close();

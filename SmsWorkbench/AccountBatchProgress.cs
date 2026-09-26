@@ -82,7 +82,7 @@ namespace SmsWorkbench
 
             detailText = new TextBlock
             {
-                Text = "正在准备账号...",
+                Text = "Preparing accounts...",
                 TextWrapping = TextWrapping.Wrap,
                 Foreground = (Brush)owner.FindResource("TextSub"),
                 MinHeight = 40,
@@ -92,7 +92,7 @@ namespace SmsWorkbench
 
             cancelButton = new Button
             {
-                Content = "取消任务",
+                Content = "Cancel task",
                 Width = 92,
                 HorizontalAlignment = HorizontalAlignment.Right,
                 VerticalAlignment = VerticalAlignment.Center,
@@ -102,7 +102,7 @@ namespace SmsWorkbench
             cancelButton.Click += (_, __) =>
             {
                 cancelButton.IsEnabled = false;
-                detailText.Text = "正在取消...";
+                detailText.Text = "Cancelling...";
                 cancel?.Invoke();
             };
             Grid.SetRow(cancelButton, 3);
@@ -113,7 +113,7 @@ namespace SmsWorkbench
                 if (!cancelButton.IsEnabled) return;
                 e.Cancel = true;
                 cancelButton.IsEnabled = false;
-                detailText.Text = "正在取消...";
+                detailText.Text = "Cancelling...";
                 cancel?.Invoke();
             };
             window.Content = root;

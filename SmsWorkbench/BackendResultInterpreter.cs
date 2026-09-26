@@ -85,17 +85,17 @@ public static class BackendResultInterpreter
     public static bool IsAccountScanResultTask(string taskName)
     {
         string name = taskName ?? "";
-        return name.StartsWith("账号测活", StringComparison.OrdinalIgnoreCase)
-            || name.StartsWith("账号优惠检测", StringComparison.OrdinalIgnoreCase);
+        return name.StartsWith("Account check", StringComparison.OrdinalIgnoreCase)
+            || name.StartsWith("Promotion check", StringComparison.OrdinalIgnoreCase);
     }
 
     /// <summary>Dialog / heading title for the per-account result dialog.</summary>
     public static string AccountScanResultTitle(string taskName)
     {
         string name = taskName ?? "";
-        return name.StartsWith("账号优惠检测", StringComparison.OrdinalIgnoreCase)
-            ? "账号优惠检测"
-            : "账号测活";
+        return name.StartsWith("Promotion check", StringComparison.OrdinalIgnoreCase)
+            ? "Promotion check"
+            : "Account check";
     }
 
     /// <summary>
@@ -190,12 +190,12 @@ public static class BackendResultInterpreter
     /// </summary>
     public static string ResultRowStatus(Dictionary<string, object> row)
     {
-        if (row == null) return "未知";
+        if (row == null) return "Unknown";
         string promotion = PromotionBadge(row);
         if (promotion.Length > 0) return promotion;
         if (BackendJson.TryGetMap(row, "probe", out var probe))
         {
-            return IsProbeDeactivated(row) ? "账号停用" : ProbeStatusLabel(probe);
+            return IsProbeDeactivated(row) ? "Account deactivated" : ProbeStatusLabel(probe);
         }
         return ScanStatusLabel(BackendJson.GetString(row, "scan_status"));
     }
@@ -222,19 +222,19 @@ public static class BackendResultInterpreter
                 else if (IsProbeReturned401(row)) tokenInvalid++;
                 else failed++;
                 string badge = PromotionBadge(row);
-                if (badge.Length == 0) badge = "未知";
+                if (badge.Length == 0) badge = "Unknown";
                 badges.TryGetValue(badge, out int count);
                 badges[badge] = count + 1;
             }
         }
         var text = new System.Text.StringBuilder();
-        text.Append("总数：").Append(total)
-            .Append("    检测成功：").Append(ok)
-            .Append("    AT失效：").Append(tokenInvalid)
-            .Append("    其他失败：").Append(failed);
+        text.Append("Total: ").Append(total)
+            .Append("    Probe succeeded: ").Append(ok)
+            .Append("    AT invalid: ").Append(tokenInvalid)
+            .Append("    Other failures: ").Append(failed);
         foreach (KeyValuePair<string, int> badge in badges.OrderByDescending(b => b.Value))
         {
-            text.Append("    ").Append(badge.Key).Append('：').Append(badge.Value);
+            text.Append("    ").Append(badge.Key).Append(': ').Append(badge.Value);
         }
         return text.ToString();
     }
@@ -244,22 +244,22 @@ public static class BackendResultInterpreter
     /// </summary>
     public static string ProbeStatusLabel(Dictionary<string, object> probe)
     {
-        if (IsDeactivatedMap(probe)) return "账号停用";
+        if (IsDeactivatedMap(probe)) return "Account deactivated";
         if (BackendJson.GetString(probe, "status_code") == "401"
             || BackendJson.GetString(probe, "status").Equals("token_invalid", StringComparison.OrdinalIgnoreCase))
-            return "AT失效 / HTTP 401";
+            return "AT invalid / HTTP 401";
         if (BackendJson.GetBool(probe, "ok"))
         {
             string statusCode = BackendJson.GetString(probe, "status_code");
-            return statusCode.Length > 0 ? "AT有效 / HTTP " + statusCode : "AT有效";
+            return statusCode.Length > 0 ? "AT valid / HTTP " + statusCode : "AT valid";
         }
         string error = BackendJson.GetString(probe, "error");
         if (error.Contains("mailbox_transport", StringComparison.OrdinalIgnoreCase)
             || error.Contains("RemoteDisconnected", StringComparison.OrdinalIgnoreCase)
             || error.Contains("ProxyError", StringComparison.OrdinalIgnoreCase))
-            return "邮箱代理/收信链路失败";
+            return "Mailbox proxy / mail delivery failed";
         string failedCode = BackendJson.GetString(probe, "status_code");
-        return failedCode.Length > 0 ? "测活失败 / HTTP " + failedCode : "测活失败";
+        return failedCode.Length > 0 ? "Check failed / HTTP " + failedCode : "Check failed";
     }
 
     /// <summary>
@@ -309,23 +309,23 @@ public static class BackendResultInterpreter
         string value = (status ?? "").Trim().ToLowerInvariant();
         return value switch
         {
-            "alive" => "正常",
-            "alive_probe_inconclusive" => "RT正常 / OAuth深度探测未完成",
-            "account_deactivated" => "账号掉号",
-            "secondary_phone_verification_required" => "手机验证",
-            "phone_verification_required" => "支付完成",
-            "scan_failed" => "扫描失败",
+            "alive" => "Normal",
+            "alive_probe_inconclusive" => "RT valid / OAuth deep probe inconclusive",
+            "account_deactivated" => "Deactivated",
+            "secondary_phone_verification_required" => "Phone verification",
+            "phone_verification_required" => "Phone verified",
+            "scan_failed" => "Scan failed",
             // account_scan now names the failure class explicitly instead of
             // collapsing every non-network failure into relogin/scan_failed.
-            "network_failed" => "网络失败",
-            "mailbox_failed" => "邮箱链路失败",
-            "auth_state_failed" => "登录态失效",
-            "rate_limited" => "触发限流",
+            "network_failed" => "Network failed",
+            "mailbox_failed" => "Mailbox link failed",
+            "auth_state_failed" => "Session invalid",
+            "rate_limited" => "Rate limited",
             // A user-initiated cancel is not a failure; see the comment beside
             // ``_SCAN_STATUS_BY_FAILURE_CLASS`` in account_scan.py.
-            "scan_cancelled" => "扫描已取消",
-            "relogin_failed" => "重登失败",
-            _ => value.Length > 0 ? value : "未知"
+            "scan_cancelled" => "Scan cancelled",
+            "relogin_failed" => "Re-login failed",
+            _ => value.Length > 0 ? value : "Unknown"
         };
     }
 
@@ -381,7 +381,7 @@ public static class BackendResultInterpreter
         if (result.TimedOut)
             return new BackendExecutionResult(
                 false,
-                $"[已超时] 后端任务超时 ({(timeoutSeconds ?? 120)}s)",
+                $"[Timed out] Backend task timed out ({(timeoutSeconds ?? 120)}s)",
                 "timed_out",
                 null);
 
@@ -391,9 +391,9 @@ public static class BackendResultInterpreter
             // argument, 2 = precondition/preflight failure, 3 = runtime
             // failure. Keep the "failed" state (UI depends on it) but surface
             // the category in the message.
-            string prefix = result.ExitCode == 1 ? "[失败·参数]"
-                : result.ExitCode == 2 ? "[失败·前置检查]"
-                : "[失败·运行时]";
+            string prefix = result.ExitCode == 1 ? "[Failed: arguments]"
+                : result.ExitCode == 2 ? "[Failed: pre-check]"
+                : "[Failed: runtime]";
             string errorText = SensitiveDataSanitizer.Redact(
                 string.IsNullOrEmpty(result.StandardError) ? result.StandardOutput : result.StandardError);
             return new BackendExecutionResult(
@@ -421,7 +421,7 @@ public static class BackendResultInterpreter
             output = SensitiveDataSanitizer.Redact(result.StandardError);
         return new BackendExecutionResult(
             output.Length > 0,
-            output.Length > 0 ? output : "[完成] 后端任务已结束",
+            output.Length > 0 ? output : "[Completed] Backend task finished",
             "completed",
             null);
     }
@@ -431,7 +431,7 @@ public static class BackendResultInterpreter
     /// </summary>
     public static BackendExecutionResult Cancelled(string taskName)
     {
-        return new BackendExecutionResult(false, "[已取消]", "cancelled", null);
+        return new BackendExecutionResult(false, "[Cancelled]", "cancelled", null);
     }
 
     /// <summary>
@@ -439,7 +439,7 @@ public static class BackendResultInterpreter
     /// </summary>
     public static BackendExecutionResult StartupFailed(string taskName, string message)
     {
-        return new BackendExecutionResult(false, $"[启动失败] {message}", "failed", null);
+        return new BackendExecutionResult(false, $"[Start failed] {message}", "failed", null);
     }
 
     /// <summary>Returns a compact, sanitized summary for account batch payloads.</summary>
@@ -458,11 +458,11 @@ public static class BackendResultInterpreter
         int timedOut = root.TryGetProperty("timed_out", out JsonElement timeoutElement) && timeoutElement.TryGetInt32(out int timeoutValue) ? timeoutValue : 0;
         if (unauthorized == 0) unauthorized = liveness401;
         return timedOut > 0
-            ? $"完成 {success}/{totalValue}，失败 {failed}，超时 {timedOut}"
+            ? $"Completed {success}/{totalValue}, failed {failed}, timed out {timedOut}"
             : mailboxAuthInvalid > 0
-                ? $"完成 {success}/{totalValue}，失败 {failed}，邮箱认证失败 {mailboxAuthInvalid}"
+                ? $"Completed {success}/{totalValue}, failed {failed}, mailbox auth failed {mailboxAuthInvalid}"
             : unauthorized > 0
-                ? $"完成 {success}/{totalValue}，失败 {failed}，401 {unauthorized}"
-                : $"完成 {success}/{totalValue}，失败 {failed}";
+                ? $"Completed {success}/{totalValue}, failed {failed}, 401 {unauthorized}"
+                : $"Completed {success}/{totalValue}, failed {failed}";
     }
 }

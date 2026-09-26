@@ -15,26 +15,27 @@ namespace SmsWorkbench
             if (status.Length == 0) return "neutral";
             if (RegistrationStatusPresentation.IsPartial(status)) return "warn";
 
-            if (PromotionStatusPresentation.IsTrialEligible(status)
-                || status.Contains('✅') || status.Contains("完成") || status.Contains("已注册")
-                || status.Contains("已获取") || status.Contains("已导入") || status.Contains("K12已进入")
-                || status.Contains("PM已创建") || status.Contains("已设置"))
-                return "success";
-
-            if (status.Contains("失败") || status.Contains("失效") || status.Contains("掉号")
-                || status.Contains("异常") || status.Contains("无RT") || status.Contains("缺失")
-                || status.Contains("未获取") || status.Contains("K12未切换") || status.Contains("K12已退出"))
+            if (Has(status, "失败", "失效", "掉号", "异常", "无RT", "缺失", "未获取", "K12未切换", "K12已退出")
+                || Has(status, "failed", "invalid", "deactivated", "missing", "absent", "no rt", "k12 exited", "not switched"))
                 return "danger";
 
-            if (status.Contains('待') || status.Contains('缺') || status.Contains("OTP")
-                || status.Contains("K12已申请") || status.Contains("旧token"))
+            if (PromotionStatusPresentation.IsTrialEligible(status)
+                || status.Contains('✅') || Has(status, "完成", "已注册", "已获取", "已导入", "K12已进入", "PM已创建", "已设置")
+                || Has(status, "completed", "registered", "imported", "present", "k12 joined", "pm created"))
+                return "success";
+
+            if (Has(status, "待", "缺", "K12已申请", "旧token", "OTP")
+                || Has(status, "pending", "k12 requested", "legacy rt"))
                 return "warn";
 
-            if (status.Contains("已保存") || status.Contains("待刷新") || status.Contains("未知"))
+            if (Has(status, "已保存", "待刷新", "未知") || Has(status, "saved", "refresh", "unknown"))
                 return "info";
 
             return "neutral";
         }
+
+        private static bool Has(string status, params string[] keywords) =>
+            keywords.Any(keyword => status.Contains(keyword, StringComparison.OrdinalIgnoreCase));
 
         public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
         {

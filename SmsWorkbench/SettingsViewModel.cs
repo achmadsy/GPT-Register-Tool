@@ -95,7 +95,7 @@ namespace SmsWorkbench
                 return;
             }
             Saved = true;
-            Status = "配置已保存。";
+            Status = "Configuration saved.";
             CloseRequested?.Invoke(this, EventArgs.Empty);
         }
     }

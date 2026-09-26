@@ -7,8 +7,8 @@ public class BackendLogPresenterTests
     [Fact]
     public void TaskStartLineHidesCliArgs()
     {
-        string line = BackendLogPresenter.TaskStartLine("选中未注册邮箱注册");
-        Assert.Equal("=========== 启动：选中未注册邮箱注册 ==========", line);
+        string line = BackendLogPresenter.TaskStartLine("Register selected unregistered mailboxes");
+        Assert.Equal("=========== Start: Register selected unregistered mailboxes ==========", line);
         Assert.DoesNotContain("python", line);
         Assert.DoesNotContain("--mailbox-file", line);
     }
@@ -41,7 +41,7 @@ public class BackendLogPresenterTests
     [InlineData("..@@SMSWORKBENCH_V2@@{\"version\":2,\"type\":\"event\"}")]
     public void MalformedEventEnvelopeKeepsThePointerLine(string raw)
     {
-        Assert.Equal("[*] 任务返回结构化结果（详情见结果弹窗与任务列表）",
+        Assert.Equal("[*] Task returned a structured result (see the result dialog and task list)",
             BackendLogPresenter.FormatLine(raw));
     }
 
@@ -54,7 +54,7 @@ public class BackendLogPresenterTests
     [InlineData("@@SMSWORKBENCH_V2@@[1,2,3]")]
     public void UnparseableEnvelopeKeepsThePointerLine(string raw)
     {
-        Assert.Equal("[*] 任务返回结构化结果（详情见结果弹窗与任务列表）",
+        Assert.Equal("[*] Task returned a structured result (see the result dialog and task list)",
             BackendLogPresenter.FormatLine(raw));
     }
 
@@ -68,8 +68,8 @@ public class BackendLogPresenterTests
     }
 
     [Theory]
-    [InlineData("ChatGPT Email Batch Registration - 50 accounts", "── 批量注册开始 · 共 50 个账号 ──")]
-    [InlineData("Account 3/50", "── 账号 3/50 ──")]
+    [InlineData("ChatGPT Email Batch Registration - 50 accounts", "── Batch registration started · 50 accounts ──")]
+    [InlineData("Account 3/50", "── Account 3/50 ──")]
     public void BatchBannersBecomeStageHeaders(string raw, string expected)
     {
         Assert.Equal(expected, BackendLogPresenter.FormatLine(raw));
@@ -172,10 +172,10 @@ public class BackendLogPresenterTests
         => new(domain, "run-1", "a@example.com", "", stage, status, detail, Total: total);
 
     [Theory]
-    [InlineData("account_scan", 50, "── 账号测活开始 · 共 50 个账号 ──")]
-    [InlineData("account_promotion", 8, "── 账号优惠检测开始 · 共 8 个账号 ──")]
+    [InlineData("account_scan", 50, "── Account check started · 50 accounts ──")]
+    [InlineData("account_promotion", 8, "── Promotion check started · 8 accounts ──")]
     // Case-insensitive domain match: the backend owns the exact casing.
-    [InlineData("Account_Scan", 3, "── 账号测活开始 · 共 3 个账号 ──")]
+    [InlineData("Account_Scan", 3, "── Account check started · 3 accounts ──")]
     public void ProgressEventLine_RendersBatchStartPerDomain(string domain, int total, string expected)
     {
         Assert.Equal(expected,
@@ -187,8 +187,8 @@ public class BackendLogPresenterTests
     {
         string? line = BackendLogPresenter.ProgressEventLine(
             ScanEvent("account_scan", "batch_completed", "completed", 50,
-                "正常 45/50，AT失效 3，掉号 1，超时 1"));
-        Assert.Equal("── 账号测活结束 · 正常 45/50，AT失效 3，掉号 1，超时 1 ──", line);
+                "Normal 45/50, AT invalid 3, deactivated 1, timed out 1"));
+        Assert.Equal("── Account check finished · Normal 45/50, AT invalid 3, deactivated 1, timed out 1 ──", line);
     }
 
     [Fact]
@@ -198,16 +198,16 @@ public class BackendLogPresenterTests
             "one_click_sms", "run-1", "a***@example.com", "", "failed", "failed",
             "email_otp_poll_timeout", FailureClass: "mailbox");
         Assert.Equal(
-            "一键接码 · a***@example.com · failed · 失败 · email_otp_poll_timeout",
+            "One-click SMS · a***@example.com · failed · failed · email_otp_poll_timeout",
             BackendLogPresenter.ProgressEventLine(progress));
     }
 
     [Fact]
     public void ProgressEventLine_SurvivesMissingDetailAndTotal()
     {
-        Assert.Equal("── 账号测活开始 ──",
+        Assert.Equal("── Account check started ──",
             BackendLogPresenter.ProgressEventLine(ScanEvent("account_scan", "batch_started")));
-        Assert.Equal("── 账号测活结束 ──",
+        Assert.Equal("── Account check finished ──",
             BackendLogPresenter.ProgressEventLine(ScanEvent("account_scan", "batch_completed")));
     }
 
@@ -250,7 +250,7 @@ public class BackendLogPresenterTests
     [InlineData("[*] Account 1/50: registered", false)]
     // The backend's bracketed marker vocabulary must never be read as JSON.
     // Each of these used to open an unparseable block, so the line was
-    // swallowed and replaced by the "无法解析的多行输出" line -- 231 of the
+    // swallowed and replaced by the "unparseable multi-line output" line -- 231 of the
     // 240 such lines measured in one real backend_stdout.log came from here.
     [InlineData("[0-Extract sentinel token]", false)]
     [InlineData("[2-Auth flow]", false)]
@@ -288,9 +288,9 @@ public class BackendLogPresenterTests
         }
 
         Assert.Single(lines);
-        Assert.Contains("成功 1/3", lines[0]);
-        Assert.Contains("注销 1", lines[0]);
-        Assert.Contains("可试优惠 1", lines[0]);
+        Assert.Contains("Succeeded 1/3", lines[0]);
+        Assert.Contains("Deactivated 1", lines[0]);
+        Assert.Contains("Trial eligible 1", lines[0]);
         // No raw JSON text may leak into the panel.
         Assert.DoesNotContain("\"", lines[0]);
     }
@@ -315,7 +315,7 @@ public class BackendLogPresenterTests
         lines.AddRange(folder.Feed("[*] Account 1/50 user@example.com: registered"));
 
         Assert.Equal(2, lines.Count);
-        Assert.Contains("折叠", lines[0]);
+        Assert.Contains("folded", lines[0]);
         Assert.Equal("[*] Account 1/50 user@example.com: registered", lines[1]);
     }
 
@@ -334,7 +334,7 @@ public class BackendLogPresenterTests
 
         Assert.Single(lines);
         Assert.Equal(raw, lines[0]);
-        Assert.DoesNotContain("折叠", lines[0]);
+        Assert.DoesNotContain("folded", lines[0]);
     }
 
     [Fact]
@@ -342,7 +342,7 @@ public class BackendLogPresenterTests
     {
         // A `--doctor --json` report measures 569 lines. The old 500-line cap
         // tripped mid-document, the partial buffer failed to parse, and the
-        // operator got "无法解析的多行输出" instead of a summary.
+        // operator got the unparseable-output line instead of a summary.
         var folder = new BackendLogFolder();
         var lines = new List<string>();
         lines.AddRange(folder.Feed("{"));
@@ -354,7 +354,7 @@ public class BackendLogPresenterTests
         lines.AddRange(folder.Feed("}"));
 
         Assert.Single(lines);
-        Assert.Equal("[*] 后端返回了结构化结果（已在日志中折叠）", lines[0]);
+        Assert.Equal("[*] Backend returned a structured result (folded in log)", lines[0]);
     }
 
     [Fact]
@@ -381,6 +381,6 @@ public class BackendLogPresenterTests
     {
         JsonDocument document = JsonDocument.Parse("{\"quota\": {\"used\": 3}}");
         string summary = BackendJsonSummary.Summarize(document);
-        Assert.Equal("[*] 后端返回了结构化结果（已在日志中折叠）", summary);
+        Assert.Equal("[*] Backend returned a structured result (folded in log)", summary);
     }
 }

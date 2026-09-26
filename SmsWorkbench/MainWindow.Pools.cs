@@ -80,7 +80,7 @@ namespace SmsWorkbench
                 }
                 catch (Exception ex)
                 {
-                    Log("合并读取邮箱池/账号失败，改用分开读取：" + SensitiveDataSanitizer.Redact(ex.Message));
+                    Log("Combined mailbox/account read failed; falling back to separate reads: " + SensitiveDataSanitizer.Redact(ex.Message));
                     await LoadMailboxPoolAsync();
                     await LoadSessionPoolAsync();
                 }
@@ -99,8 +99,8 @@ namespace SmsWorkbench
                 currentPage = restorePage;
                 UpdateOverview();
                 RefreshPagedRows();
-                StatusText = $"共 {allRows.Count} 条；当前筛选 {filteredCount} 条";
-                Log("邮箱池和 session 状态已刷新。");
+                StatusText = $"Total {allRows.Count} rows; {filteredCount} match the current filter";
+                Log("Mailbox pool and session status refreshed.");
             }
             finally
             {
@@ -129,8 +129,8 @@ namespace SmsWorkbench
 
             int start = filteredCount == 0 ? 0 : (currentPage - 1) * pageSize + 1;
             int end = filteredCount == 0 ? 0 : Math.Min(filteredCount, currentPage * pageSize);
-            PageStatusText = $"第 {currentPage}/{pageCount} 页，显示 {start}-{end} / {filteredCount}";
-            StatusText = $"共 {allRows.Count} 条；当前筛选 {filteredCount} 条";
+            PageStatusText = $"Page {currentPage}/{pageCount}, showing {start}-{end} of {filteredCount}";
+            StatusText = $"Total {allRows.Count} rows; {filteredCount} match the current filter";
         }
 
         private void UpdateOverview()
@@ -150,6 +150,7 @@ namespace SmsWorkbench
                 || RegistrationStatusPresentation.IsPartial(row.Status)) return false;
             return row.AccountType.Contains("Session")
                 || row.SourcePath.EndsWith(".sqlite3", StringComparison.OrdinalIgnoreCase)
+                || row.Status.Contains("Registered")
                 || row.Status.Contains("已注册")
                 || row.Status.Contains("PayPal");
         }
@@ -160,13 +161,16 @@ namespace SmsWorkbench
             if (string.IsNullOrWhiteSpace(row.Identifier)) return false;
             if (row.HasAccessToken) return true;
             string status = (row.Status + " " + row.PayPalStatus).Trim();
-            return status.Contains("已注册")
+            return status.Contains("Registered")
+                || status.Contains("Pending payment")
+                || status.Contains("Payment completed")
+                || status.Contains("PM created")
+                || status.Contains("Imported")
+                || status.Contains("已注册")
                 || status.Contains("待支付")
                 || status.Contains("支付完成")
                 || status.Contains("PM已创建")
-                || status.Contains("已导入")
-                || status.Contains("Registered")
-                || status.Contains("Payment completed");
+                || status.Contains("已导入");
         }
 
         private void DeduplicateRows()
@@ -216,7 +220,7 @@ namespace SmsWorkbench
             }
             catch (Exception ex)
             {
-                Log("读取邮箱池 backend 失败：" + SensitiveDataSanitizer.Redact(ex.Message));
+                Log("Mailbox pool read failed: " + SensitiveDataSanitizer.Redact(ex.Message));
             }
         }
 
@@ -224,7 +228,7 @@ namespace SmsWorkbench
         {
             if (!payload.TryGetProperty("files", out JsonElement files) || files.ValueKind != JsonValueKind.Array)
             {
-                Log("读取邮箱池 backend 失败：响应缺少 files 数组。");
+                Log("Mailbox pool read failed: response is missing the files array.");
                 return;
             }
             foreach (JsonElement file in files.EnumerateArray())
@@ -283,20 +287,20 @@ namespace SmsWorkbench
 
         private static string MailboxPoolAccountType(string provider) => provider switch
         {
-            "cfworker" => "CFWorker邮箱池",
-            "remail" => "ReMail邮箱池",
-            "smailr" => "Smailr邮箱池",
-            "icloud_url" => "iCloud邮箱池",
-            "gmail" => "Gmail邮箱池",
-            "chatai" => "Chatai邮箱池",
-            _ => "邮箱池",
+            "cfworker" => "CFWorker pool",
+            "remail" => "ReMail pool",
+            "smailr" => "Smailr pool",
+            "icloud_url" => "iCloud pool",
+            "gmail" => "Gmail pool",
+            "chatai" => "Chatai pool",
+            _ => "Mailbox pool",
         };
 
         private static string MailboxPoolStatus(string provider, string authMode)
         {
-            if (provider == "gmail") return authMode == "oauth_refresh" ? "已授权" : "可收信";
-            if (provider is "chatai" or "graph") return "已授权";
-            return "可收信";
+            if (provider == "gmail") return authMode == "oauth_refresh" ? "Authorized" : "Can receive mail";
+            if (provider is "chatai" or "graph") return "Authorized";
+            return "Can receive mail";
         }
 
         private string MailboxPoolRefreshDisplay(string provider, string refreshToken)
@@ -306,7 +310,7 @@ namespace SmsWorkbench
                 case "cfworker": return "CFWorker";
                 case "remail": return "ReMail";
                 case "smailr": return "Smailr";
-                case "icloud_url": return "接码链接";
+                case "icloud_url": return "SMS link";
                 case "gmail": return refreshToken.Length > 0 ? Mask(refreshToken) : "AppPassword";
                 default: return refreshToken.Length > 0 ? Mask(refreshToken) : "";
             }
@@ -342,7 +346,7 @@ namespace SmsWorkbench
             }
             catch (Exception ex)
             {
-                Log("读取账号 backend 失败：" + SensitiveDataSanitizer.Redact(ex.Message));
+                Log("Account read failed: " + SensitiveDataSanitizer.Redact(ex.Message));
             }
         }
 
@@ -350,7 +354,7 @@ namespace SmsWorkbench
         {
             if (!payload.TryGetProperty("accounts", out JsonElement accounts) || accounts.ValueKind != JsonValueKind.Array)
             {
-                Log("读取账号 backend 失败：响应缺少 accounts 数组。");
+                Log("Account read failed: response is missing the accounts array.");
                 return;
             }
             // Per-refresh values hoisted out of the row loop; each used to
@@ -437,7 +441,7 @@ namespace SmsWorkbench
                     paypalAmount),
                 PromotionState = GetString(data, "promotion_state"),
                 RefreshTokenStatus = AccountStatusInterpreter.DisplayRtStatus(refreshStatus),
-                TwoFactorStatus = AccountStatusInterpreter.HasTwoFactor(data) ? "已设置" : "未设置",
+                TwoFactorStatus = AccountStatusInterpreter.HasTwoFactor(data) ? "Set" : "Not set",
                 HasAccessToken = hasAccess,
                 AccessTokenProbeStatusCode = AccountStatusInterpreter.GetAccessTokenProbeStatusCode(data),
                 PayPalUrl = paypalUrl,

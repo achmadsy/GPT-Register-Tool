@@ -120,7 +120,7 @@ namespace SmsWorkbench
 
             if (lines.Count == 0)
             {
-                ShowThemedInfoDialog("一键导出", "没有找到可导出的账号记录。仅支持包含邮箱、密码、客户端ID、刷新令牌的邮箱记录；CFWorker 或缺少密码/刷新令牌的记录会被跳过。");
+                ShowThemedInfoDialog("Export", "No exportable account records found. Only mailbox records with email, password, client ID, and refresh token are supported; CFWorker records or ones missing password/refresh token are skipped.");
                 return;
             }
 
@@ -129,7 +129,7 @@ namespace SmsWorkbench
             string outputPath = Path.Combine(outputDir, "account-" + DateTime.Now.ToString("yyyyMMdd_HHmmss") + ".txt");
             File.WriteAllLines(outputPath, lines, new UTF8Encoding(false));
             Log("One-click export wrote " + lines.Count + " account(s), skipped " + skipped + ": " + outputPath);
-            ShowExportCompleteDialog(outputPath, lines.Count, skipped, "TXT", "账号----密码----客户端ID----刷新令牌");
+            ShowExportCompleteDialog(outputPath, lines.Count, skipped, "TXT", "email----password----client-ID----refresh-token");
         }
 
         private void ExportAccountsJson(List<PoolRow> rows)
@@ -140,7 +140,7 @@ namespace SmsWorkbench
             var collected = await CollectAccountExportJsonAsync(rows);
             if (collected.Items.Count == 0)
             {
-                ShowThemedInfoDialog("一键导出", "没有找到可导出的 JSON 账号记录。需要账号已生成 session/auth_session 或 SQLite 原始记录。");
+                ShowThemedInfoDialog("Export", "No JSON account records found. An account needs a generated session/auth_session or an SQLite record.");
                 return;
             }
 
@@ -151,7 +151,7 @@ namespace SmsWorkbench
             var options = new JsonSerializerOptions { WriteIndented = true };
             await Task.Run(() => File.WriteAllText(outputPath, JsonSerializer.Serialize(payload, options), new UTF8Encoding(false)));
             Log("One-click JSON export wrote " + collected.Items.Count + " account(s), skipped " + collected.Skipped + ": " + outputPath);
-            ShowExportCompleteDialog(outputPath, collected.Items.Count, collected.Skipped, "JSON", "原始账号 session JSON；保留 RT 字段，未获取 RT 的账号默认留空");
+            ShowExportCompleteDialog(outputPath, collected.Items.Count, collected.Skipped, "JSON", "Raw account session JSON; RT fields are preserved and left empty when absent");
         }
 
         private sealed record CollectedAccountExport(List<Dictionary<string, object>> Items, int Skipped);
@@ -188,7 +188,7 @@ namespace SmsWorkbench
             var collected = await CollectAccountExportJsonAsync(rows);
             if (collected.Items.Count == 0)
             {
-                ShowThemedInfoDialog("一键导出", "没有找到可转换的账号 session。需要账号已生成 access_token/session/auth_session 或 SQLite 原始记录。");
+                ShowThemedInfoDialog("Export", "No account sessions to convert. An account needs access_token/session/auth_session or an SQLite record.");
                 return;
             }
             List<Dictionary<string, object>> items = collected.Items;
@@ -211,8 +211,8 @@ namespace SmsWorkbench
             }
             catch (Exception ex)
             {
-                Log("账号格式转换失败：" + ex.Message);
-                ShowThemedInfoDialog("一键导出", "账号格式转换失败：" + ex.Message);
+                Log("Account format conversion failed: " + ex.Message);
+                ShowThemedInfoDialog("Export", "Account format conversion failed: " + ex.Message);
                 return;
             }
             finally
@@ -222,7 +222,7 @@ namespace SmsWorkbench
 
             if (!File.Exists(outputPath) || new FileInfo(outputPath).Length == 0)
             {
-                ShowThemedInfoDialog("一键导出", "账号格式转换没有生成输出文件，请查看下方日志确认 converter 结果。");
+                ShowThemedInfoDialog("Export", "Format conversion produced no output file. Check the log below for the converter result.");
                 return;
             }
 
@@ -235,7 +235,7 @@ namespace SmsWorkbench
             string selected = "";
             var dialog = new Window
             {
-                Title = "一键导出",
+                Title = "Export Accounts",
                 Owner = this,
                 Width = 560,
                 MinWidth = 520,
@@ -254,14 +254,14 @@ namespace SmsWorkbench
             var header = new StackPanel { Margin = new Thickness(0, 0, 0, 16) };
             header.Children.Add(new TextBlock
             {
-                Text = "选择导出格式",
+                Text = "Choose export format",
                 FontSize = 18,
                 FontWeight = FontWeights.SemiBold,
                 Foreground = (Brush)FindResource("TextMain")
             });
             header.Children.Add(new TextBlock
             {
-                Text = "TXT 保持邮箱原格式；原始 JSON 保留 session；其它格式会调用 session_converter.py 转为 CPA/Sub2API/Cockpit/9router/Codex/AxonHub/Codex-Manager。",
+                Text = "TXT keeps the raw mailbox line format; raw JSON keeps the session; other formats run session_converter.py to produce CPA/Sub2API/Cockpit/9router/Codex/AxonHub/Codex-Manager output.",
                 TextWrapping = TextWrapping.Wrap,
                 LineHeight = 20,
                 Margin = new Thickness(0, 6, 0, 0),
@@ -271,8 +271,8 @@ namespace SmsWorkbench
             root.Children.Add(header);
 
             var combo = new ComboBox { SelectedIndex = 2, Margin = new Thickness(0, 0, 0, 16) };
-            combo.Items.Add(new ComboBoxItem { Content = "TXT - 邮箱----密码----客户端ID----刷新令牌", Tag = "txt" });
-            combo.Items.Add(new ComboBoxItem { Content = "原始 JSON - session/auth_session", Tag = "json" });
+            combo.Items.Add(new ComboBoxItem { Content = "TXT - email----password----client-ID----refresh-token", Tag = "txt" });
+            combo.Items.Add(new ComboBoxItem { Content = "Raw JSON - session/auth_session", Tag = "json" });
             combo.Items.Add(new ComboBoxItem { Content = "CPA JSON", Tag = "cpa" });
             combo.Items.Add(new ComboBoxItem { Content = "Sub2API JSON", Tag = "sub2api" });
             combo.Items.Add(new ComboBoxItem { Content = "Cockpit JSON", Tag = "cockpit" });
@@ -290,7 +290,7 @@ namespace SmsWorkbench
             };
             var exportButton = new Button
             {
-                Content = "导出",
+                Content = "Export",
                 Width = 88,
                 Style = (Style)FindResource("PrimaryButton")
             };
@@ -301,7 +301,7 @@ namespace SmsWorkbench
             };
             var cancelButton = new Button
             {
-                Content = "取消",
+                Content = "Cancel",
                 Width = 76,
                 Margin = new Thickness(8, 0, 0, 0)
             };
@@ -325,7 +325,7 @@ namespace SmsWorkbench
             if (value == "codex") return "Codex auth.json";
             if (value == "axonhub") return "AxonHub JSON";
             if (value == "codexmanager") return "Codex-Manager JSON";
-            if (value == "json") return "原始 JSON";
+            if (value == "json") return "Raw JSON";
             if (value == "txt") return "TXT";
             return "CPA JSON";
         }
@@ -333,20 +333,20 @@ namespace SmsWorkbench
         private string ExportFormatDescription(string format)
         {
             string value = (format ?? "").Trim().ToLowerInvariant();
-            if (value == "sub2api") return "由 session_converter.py 生成的 Sub2API accounts 文档";
-            if (value == "cockpit") return "由 session_converter.py 生成的 Cockpit/Codex 导入结构";
-            if (value == "9router") return "由 session_converter.py 生成的 9router provider 结构";
-            if (value == "codex") return "由 session_converter.py 生成的 Codex auth.json 结构";
-            if (value == "axonhub") return "由 session_converter.py 生成的 AxonHub 结构；缺少 RT 时会写入占位提示";
-            if (value == "codexmanager") return "由 session_converter.py 生成的 Codex-Manager 结构";
-            return "由 session_converter.py 生成的 CPA JSON；缺少 id_token 时会合成兼容字段";
+            if (value == "sub2api") return "Sub2API accounts document produced by session_converter.py";
+            if (value == "cockpit") return "Cockpit/Codex import structure produced by session_converter.py";
+            if (value == "9router") return "9router provider structure produced by session_converter.py";
+            if (value == "codex") return "Codex auth.json structure produced by session_converter.py";
+            if (value == "axonhub") return "AxonHub structure produced by session_converter.py; a placeholder is written when RT is missing";
+            if (value == "codexmanager") return "Codex-Manager structure produced by session_converter.py";
+            return "CPA JSON produced by session_converter.py; a compatible field is synthesized when id_token is missing";
         }
 
         private void ShowExportCompleteDialog(string outputPath, int exportedCount, int skippedCount, string formatLabel, string formatDescription)
         {
             var dialog = new Window
             {
-                Title = "一键导出",
+                Title = "Export Accounts",
                 Owner = this,
                 Width = 520,
                 MinWidth = 460,
@@ -364,14 +364,14 @@ namespace SmsWorkbench
             var header = new StackPanel { Margin = new Thickness(0, 0, 0, 14) };
             header.Children.Add(new TextBlock
             {
-                Text = "导出完成",
+                Text = "Export complete",
                 FontSize = 18,
                 FontWeight = FontWeights.SemiBold,
                 Foreground = (Brush)FindResource("TextMain")
             });
             header.Children.Add(new TextBlock
             {
-                Text = "已生成账号 " + formatLabel + " 文件：" + formatDescription,
+                Text = "Generated the account " + formatLabel + " file: " + formatDescription,
                 TextWrapping = TextWrapping.Wrap,
                 LineHeight = 20,
                 Margin = new Thickness(0, 6, 0, 0),
@@ -392,7 +392,7 @@ namespace SmsWorkbench
             var summaryStack = new StackPanel();
             summaryStack.Children.Add(new TextBlock
             {
-                Text = "数量：" + exportedCount + "    跳过：" + skippedCount,
+                Text = "Exported: " + exportedCount + "    Skipped: " + skippedCount,
                 FontWeight = FontWeights.SemiBold,
                 Foreground = (Brush)FindResource("TextMain")
             });
@@ -414,7 +414,7 @@ namespace SmsWorkbench
             };
             var openDirButton = new Button
             {
-                Content = "打开目录",
+                Content = "Open folder",
                 Width = 92,
                 Style = (Style)FindResource("PrimaryButton")
             };
@@ -426,7 +426,7 @@ namespace SmsWorkbench
             };
             var closeButton = new Button
             {
-                Content = "关闭",
+                Content = "Close",
                 Width = 76,
                 Margin = new Thickness(8, 0, 0, 0)
             };
@@ -440,12 +440,12 @@ namespace SmsWorkbench
             dialog.ShowDialog();
         }
 
-        private void ShowAccountScanResultDialog(string backendOutput, string title = "账号测活")
+        private void ShowAccountScanResultDialog(string backendOutput, string title = "Account check")
         {
             var summary = BackendResultInterpreter.TryExtractScanSummary(backendOutput);
             if (summary == null)
             {
-                ShowThemedInfoDialog(title, title + "已结束，但未解析到结果汇总。请查看下方日志确认详情。");
+                ShowThemedInfoDialog(title, title + " finished, but no result summary could be parsed. Check the log below for details.");
                 return;
             }
 
@@ -463,14 +463,14 @@ namespace SmsWorkbench
 
             bool directProbe = results.Any(r => BackendJson.TryGetMap(r, "probe", out _));
             // Promotion rows carry their own badge; without this the panel would
-            // show "AT有效 / HTTP 200" and hide the actual 优惠 answer.
+            // show "AT valid / HTTP 200" and hide the actual promotion answer.
             bool isPromotion = BackendResultInterpreter.IsPromotionRows(results);
             var rtRows = directProbe ? new List<Dictionary<string, object>>() : results.Where(r => BackendJson.GetBool(r, "has_rt")).ToList();
             var noRtRows = directProbe ? results : results.Where(r => !BackendJson.GetBool(r, "has_rt")).ToList();
 
             var dialog = new Window
             {
-                Title = title + "结果",
+                Title = title + " Results",
                 Owner = this,
                 Width = 740,
                 MinWidth = 740,
@@ -489,7 +489,7 @@ namespace SmsWorkbench
             var header = new StackPanel { Margin = new Thickness(0, 0, 0, 14) };
             header.Children.Add(new TextBlock
             {
-                Text = title + "完成",
+                Text = title + " complete",
                 FontSize = 18,
                 FontWeight = FontWeights.SemiBold,
                 Foreground = (Brush)FindResource("TextMain")
@@ -500,12 +500,12 @@ namespace SmsWorkbench
                     ? BackendResultInterpreter.PromotionSummary(results)
                     : directProbe
                     ? FormatDirectProbeSummary(results, summary)
-                    : "总数：" + BackendJson.GetString(summary, "total")
-                        + "    正常：" + BackendJson.GetString(summary, "alive")
-                        + "    掉号：" + BackendJson.GetString(summary, "account_deactivated")
-                        + "    401/AT失效：" + BackendJson.GetString(summary, "at_invalid")
-                        + "    手机验证：" + BackendJson.GetString(summary, "secondary_phone_verification_required")
-                        + "    失败：" + BackendJson.GetString(summary, "failed"),
+                    : "Total: " + BackendJson.GetString(summary, "total")
+                        + "    Alive: " + BackendJson.GetString(summary, "alive")
+                        + "    Deactivated: " + BackendJson.GetString(summary, "account_deactivated")
+                        + "    401/AT invalid: " + BackendJson.GetString(summary, "at_invalid")
+                        + "    Phone verification: " + BackendJson.GetString(summary, "secondary_phone_verification_required")
+                        + "    Failed: " + BackendJson.GetString(summary, "failed"),
                 Margin = new Thickness(0, 6, 0, 0),
                 Foreground = (Brush)FindResource("TextSub")
             });
@@ -517,18 +517,18 @@ namespace SmsWorkbench
             {
                 AddScanResultSection(
                     body,
-                    isPromotion ? title + "结果" : (directProbe ? "AT 测活结果" : "未接码号结果"),
+                    isPromotion ? title + " results" : (directProbe ? "AT probe results" : "No-phone-verification results"),
                     noRtRows);
             }
             if (rtRows.Count > 0)
             {
-                AddScanResultSection(body, "已接码号结果", rtRows);
+                AddScanResultSection(body, "Phone-verified results", rtRows);
             }
             if (body.Children.Count == 0)
             {
                 body.Children.Add(new TextBlock
                 {
-                    Text = "没有可展示的" + title + "明细。",
+                    Text = "No " + title + " details to display.",
                     Foreground = (Brush)FindResource("TextSub")
                 });
             }
@@ -548,7 +548,7 @@ namespace SmsWorkbench
                 HorizontalAlignment = HorizontalAlignment.Right,
                 Margin = new Thickness(0, 16, 0, 0)
             };
-            var ok = new Button { Content = "关闭", Width = 82, Style = (Style)FindResource("PrimaryButton") };
+            var ok = new Button { Content = "Close", Width = 82, Style = (Style)FindResource("PrimaryButton") };
             ok.Click += (_, __) => dialog.Close();
             actions.Children.Add(ok);
             Grid.SetRow(actions, 2);
@@ -573,16 +573,16 @@ namespace SmsWorkbench
                 && BackendResultInterpreter.IsProbeReturned401(row));
             int directFailed = Math.Max(0, results.Count - directOk - direct401 - directDeactivated);
             int.TryParse(BackendJson.GetString(summary, "relogin_attempted"), out int reloginAttempted);
-            string directSummary = "总数：" + results.Count
-                + "    AT有效：" + directOk
-                + "    AT失效：" + direct401
-                + "    账号停用：" + directDeactivated
-                + "    其他失败：" + directFailed;
+            string directSummary = "Total: " + results.Count
+                + "    AT valid: " + directOk
+                + "    AT invalid: " + direct401
+                + "    Deactivated: " + directDeactivated
+                + "    Other failures: " + directFailed;
             if (reloginAttempted > 0)
             {
-                directSummary += "    重登成功：" + BackendJson.GetString(summary, "relogin_success")
-                    + "    重登失败：" + BackendJson.GetString(summary, "relogin_failed")
-                    + "    确认停用：" + BackendJson.GetString(summary, "relogin_account_deactivated");
+                directSummary += "    Re-login OK: " + BackendJson.GetString(summary, "relogin_success")
+                    + "    Re-login failed: " + BackendJson.GetString(summary, "relogin_failed")
+                    + "    Confirmed deactivated: " + BackendJson.GetString(summary, "relogin_account_deactivated");
             }
             return directSummary;
         }
@@ -591,7 +591,7 @@ namespace SmsWorkbench
         {
             parent.Children.Add(new TextBlock
             {
-                Text = title + "（" + rows.Count + "）",
+                Text = title + " (" + rows.Count + ")",
                 FontSize = 15,
                 FontWeight = FontWeights.SemiBold,
                 Foreground = (Brush)FindResource("TextMain"),
@@ -691,7 +691,7 @@ namespace SmsWorkbench
             }
             catch (Exception ex)
             {
-                Log("读取账号导出 backend 失败：" + SensitiveDataSanitizer.Redact(row.Identifier) + " " + SensitiveDataSanitizer.Redact(ex.Message));
+                Log("Account export backend read failed: " + SensitiveDataSanitizer.Redact(row.Identifier) + " " + SensitiveDataSanitizer.Redact(ex.Message));
                 return false;
             }
         }
@@ -829,7 +829,7 @@ namespace SmsWorkbench
 
             var label = new TextBlock
             {
-                Text = "选择导入目标",
+                Text = "Choose import target",
                 Foreground = (System.Windows.Media.Brush)FindResource("TextMain"),
                 FontWeight = FontWeights.SemiBold,
                 Margin = new Thickness(0, 0, 0, 10)
@@ -848,13 +848,13 @@ namespace SmsWorkbench
                 Orientation = Orientation.Horizontal,
                 HorizontalAlignment = HorizontalAlignment.Right
             };
-            var ok = new Button { Content = "确定", Width = 76, Style = (Style)FindResource("PrimaryButton") };
+            var ok = new Button { Content = "OK", Width = 76, Style = (Style)FindResource("PrimaryButton") };
             ok.Click += (_, __) =>
             {
                 selected = ((combo.SelectedItem as ComboBoxItem)?.Tag as string) ?? "cpa";
                 dialog.Close();
             };
-            var cancel = new Button { Content = "取消", Width = 76, Margin = new Thickness(8, 0, 0, 0) };
+            var cancel = new Button { Content = "Cancel", Width = 76, Margin = new Thickness(8, 0, 0, 0) };
             cancel.Click += (_, __) =>
             {
                 selected = "";

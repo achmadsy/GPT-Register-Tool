@@ -150,7 +150,7 @@ public sealed class SmsProviderCatalogClientTests
             Assert.Single(SmsProviderCatalogClient.ParseCatalog(CountriesJson, prices));
         Assert.Equal("9999", choice.Id);
         Assert.Equal("9999", choice.EnglishName);
-        Assert.Equal("国家 9999", choice.DisplayName);
+        Assert.Equal("Country 9999", choice.DisplayName);
     }
 
     [Fact]
@@ -171,7 +171,7 @@ public sealed class SmsProviderCatalogClientTests
         SmsProviderCountryChoice choice =
             Assert.Single(SmsProviderCatalogClient.ParseCatalog(CountriesJson, prices));
         Assert.True(choice.Tiers[0].NumericPrice > 0m);
-        Assert.Equal("$0.31 / 个 · 库存 5", choice.Tiers[0].DisplayName);
+        Assert.Equal("$0.31 each · stock 5", choice.Tiers[0].DisplayName);
     }
 
     [Fact]
@@ -179,7 +179,7 @@ public sealed class SmsProviderCatalogClientTests
     {
         var tier = new SmsProviderPriceTier("0.1207", SmsProviderPriceTier.UnknownCount);
 
-        Assert.Equal("$0.1207 / 个 · 库存未查询", tier.DisplayName);
+        Assert.Equal("$0.1207 each · stock not queried", tier.DisplayName);
     }
 
     [Fact]

@@ -13,7 +13,7 @@ namespace SmsWorkbench
                 ? Wpf.Ui.Appearance.ApplicationTheme.Light
                 : Wpf.Ui.Appearance.ApplicationTheme.Dark;
 
-            Log($"切换主题被点击。新主题: {_currentTheme}");
+            Log($"Theme toggle clicked. New theme: {_currentTheme}");
 
             try
             {
@@ -21,11 +21,11 @@ namespace SmsWorkbench
                 ApplyCustomThemeColors(_currentTheme);
                 WindowThemeService.ApplyToOpenWindows();
                 ThemeIconGeometry = _currentTheme == Wpf.Ui.Appearance.ApplicationTheme.Dark ? MoonIcon : SunIcon;
-                Log("主题更新应用成功。");
+                Log("Theme update applied.");
             }
             catch (Exception ex)
             {
-                Log($"应用主题异常: {ex.Message}");
+                Log($"Theme apply failed: {ex.Message}");
             }
         }
 

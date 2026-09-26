@@ -25,7 +25,7 @@ namespace SmsWorkbench
             Key = key;
             Domain = domain;
             RunId = runId;
-            AccountRef = string.IsNullOrWhiteSpace(accountRef) ? "等待账号" : accountRef;
+            AccountRef = string.IsNullOrWhiteSpace(accountRef) ? "Waiting for account" : accountRef;
             Method = method;
             StartedAt = DateTimeOffset.Now;
             foreach (string stage in stages)
@@ -39,7 +39,7 @@ namespace SmsWorkbench
         public ObservableCollection<StageMatrixCell> Cells { get; } = new();
         [ObservableProperty] private string accountRef;
         [ObservableProperty] private string method;
-        [ObservableProperty] private string currentStage = "等待";
+        [ObservableProperty] private string currentStage = "Waiting";
         [ObservableProperty] private string status = "running";
         [ObservableProperty] private string elapsed = "0s";
     }
@@ -63,7 +63,7 @@ namespace SmsWorkbench
         };
 
         public ObservableCollection<StageMatrixRun> Runs { get; } = new();
-        [ObservableProperty] private string summary = "等待后端阶段事件";
+        [ObservableProperty] private string summary = "Waiting for backend stage events";
 
         // Optional: the body already reads it with a null-conditional, so a
         // missing store is a supported state rather than a caller mistake.
@@ -128,7 +128,7 @@ namespace SmsWorkbench
                 ? cell.Status
                 : terminalCompleted ? "completed" : "running";
             run.Elapsed = FormatElapsed(DateTimeOffset.Now - run.StartedAt);
-            Summary = $"运行 {Runs.Count(item => item.Status == "running")}  完成 {Runs.Count(item => item.Status == "completed")}  失败 {Runs.Count(item => item.Status == "failed")}";
+            Summary = $"Running {Runs.Count(item => item.Status == "running")}  Completed {Runs.Count(item => item.Status == "completed")}  Failed {Runs.Count(item => item.Status == "failed")}";
             if (persist)
                 _store?.Append(progress);
         }
@@ -137,7 +137,7 @@ namespace SmsWorkbench
         {
             Runs.Clear();
             _lastSequences.Clear();
-            Summary = "等待后端阶段事件";
+            Summary = "Waiting for backend stage events";
         }
 
         // ClearHistory() removed (2026-09-02, round 6): no caller in the app and

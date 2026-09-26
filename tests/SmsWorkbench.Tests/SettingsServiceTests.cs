@@ -100,7 +100,7 @@ public sealed class SettingsServiceTests
         Assert.Equal(SettingFieldKind.Secret, SettingsCatalog.AllFields.Single(field => field.Key == "roxy_api_token").Kind);
         Assert.Equal(SettingFieldKind.Secret, SettingsCatalog.AllFields.Single(field => field.Key == "cloak_license_key").Kind);
         Assert.Contains(
-            SettingsCatalog.Categories.Single(category => category.Title == "注册与接码").Sections,
+            SettingsCatalog.Categories.Single(category => category.Title == "Registration & SMS").Sections,
             section => section.Title == "RoxyBrowser");
     }
 

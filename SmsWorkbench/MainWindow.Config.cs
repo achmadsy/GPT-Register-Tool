@@ -12,7 +12,7 @@ namespace SmsWorkbench
         private void ShowConfigDialog()
         {
             if (settingsDialogs.ShowDialog(this))
-                Log("配置已保存。");
+                Log("Configuration saved.");
         }
     }
 }

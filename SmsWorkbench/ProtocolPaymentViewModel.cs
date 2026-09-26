@@ -77,7 +77,7 @@ namespace SmsWorkbench
         [ObservableProperty] private bool requireBaToken = true;
         [ObservableProperty] private bool isRunning;
         [ObservableProperty] private string resultText = "";
-        [ObservableProperty] private string statusText = "就绪";
+        [ObservableProperty] private string statusText = "Ready";
 
         public bool ShowManualToken => IsManual;
         public bool ShowJitAndProbe => IsSelectedAccount;
@@ -86,13 +86,13 @@ namespace SmsWorkbench
         public bool ShowStageCountries => SelectedMethod != null;
         public bool IsOfflineValidationOnly => SelectedMethod?.Adapter == "regional_wallet";
         public bool CanToggleProbeOnly => ShowProbeOnly;
-        public string RunActionText => ProbeOnly ? "开始探测" : SelectedMethod?.Id == "blik" ? "执行支付" : "提取链接";
+        public string RunActionText => ProbeOnly ? "Start probe" : SelectedMethod?.Id == "blik" ? "Run payment" : "Extract link";
         public bool CanRequireBa => SelectedMethod?.Id == "paypal" && !ProbeOnly;
         public bool CanRequireZero => !ProbeOnly;
         public bool CanEditUpdateCountry => SelectedMethod?.Id is "paypal" or "gopay" or "direct_card";
         public bool HasUrl => _lastUrl.Length > 0;
         public bool HasQr => _lastQrPath.Length > 0 && FileLauncher.Exists(_lastQrPath);
-        public string AccountLabel => Account == null ? "手动 Access Token" : Account.Email;
+        public string AccountLabel => Account == null ? "Manual Access Token" : Account.Email;
 
         partial void OnSelectedMethodChanged(PaymentMethodDefinition value)
         {
@@ -141,19 +141,19 @@ namespace SmsWorkbench
         private async Task TestProxyAsync()
         {
             IsRunning = true;
-            StatusText = "正在测试 checkout / approve / update 代理出口...";
+            StatusText = "Testing checkout / approve / update proxy egress...";
             try
             {
                 ResultText = await _service.TestProxiesAsync(
                     SelectedMethod.Id,
                     new PaymentBatchProxyConfiguration(CheckoutProxyPool, ApproveProxyPool, CheckoutCountry, ApproveCountry, UpdateCountry),
                     CancellationToken.None);
-                StatusText = "代理探测完成";
+                StatusText = "Proxy probe completed";
             }
             catch (Exception exception)
             {
-                ResultText = "[异常] " + SensitiveDataSanitizer.Redact(exception.Message);
-                StatusText = "代理探测失败";
+                ResultText = "[Error] " + SensitiveDataSanitizer.Redact(exception.Message);
+                StatusText = "Proxy probe failed";
             }
             finally
             {
@@ -167,27 +167,27 @@ namespace SmsWorkbench
                 SelectedMethod.Id,
                 new PaymentBatchProxyConfiguration(CheckoutProxyPool, ApproveProxyPool, CheckoutCountry, ApproveCountry, UpdateCountry));
             ResultText = result.Ok
-                ? "[成功] 已保存当前支付方式的 Checkout / Approve-Update 代理池。"
-                : "[失败] " + result.Error;
+                ? "[Success] Saved the Checkout / Approve-Update proxy pool for the current payment method."
+                : "[Failed] " + result.Error;
         }
 
         private async Task RunAsync()
         {
             if (IsOfflineValidationOnly && !ProbeOnly)
             {
-                ResultText = "该区域支付方式目前只开放独立适配器离线契约验证；生产 transport 尚未配置。请启用能力探测。";
-                StatusText = "仅支持离线验证";
+                ResultText = "This regional method currently only supports standalone-adapter offline contract validation; no production transport is configured. Enable the capability probe.";
+                StatusText = "Offline validation only";
                 return;
             }
             if (IsManual && string.IsNullOrWhiteSpace(ManualAccessToken))
             {
-                ResultText = "请输入 Access Token";
+                ResultText = "Enter an Access Token";
                 return;
             }
             if (!ProbeOnly && SelectedMethod.Id == "blik"
                 && (BlikCode.Trim().Length != 6 || !BlikCode.Trim().All(char.IsDigit)))
             {
-                ResultText = "请输入有效的 6 位 BLIK Code";
+                ResultText = "Enter a valid 6-digit BLIK code";
                 return;
             }
 
@@ -199,7 +199,7 @@ namespace SmsWorkbench
             _lastQrPath = "";
             OnPropertyChanged(nameof(HasUrl));
             OnPropertyChanged(nameof(HasQr));
-            StatusText = ProbeOnly ? "正在执行 Checkout / Stripe init 能力探测..." : "正在执行协议支付...";
+            StatusText = ProbeOnly ? "Running Checkout / Stripe init capability probe..." : "Running protocol payment...";
             var progress = new Progress<BackendOutputLine>(line =>
             {
                 if (BackendProgressEventParser.TryParse(line.Text, out BackendProgressEvent? progressEvent))
@@ -231,7 +231,7 @@ namespace SmsWorkbench
                 ResultText = outcome.Presentation.Text;
                 _lastUrl = outcome.Presentation.Url ?? "";
                 _lastQrPath = outcome.Presentation.QrPath ?? "";
-                StatusText = outcome.Error.Length > 0 ? "执行失败" : "已结束";
+                StatusText = outcome.Error.Length > 0 ? "Run failed" : "Finished";
                 OnPropertyChanged(nameof(HasUrl));
                 OnPropertyChanged(nameof(HasQr));
                 (CopyCommand as RelayCommand)?.NotifyCanExecuteChanged();
@@ -248,7 +248,7 @@ namespace SmsWorkbench
         private void Cancel()
         {
             if (_cancellation == null) return;
-            StatusText = "正在取消协议支付任务...";
+            StatusText = "Cancelling protocol payment run...";
             _cancellation.Cancel();
         }
 
@@ -264,7 +264,7 @@ namespace SmsWorkbench
         {
             if (!HasUrl) return;
             Clipboard.SetText(_lastUrl);
-            StatusText = "支付链接已复制";
+            StatusText = "Payment link copied";
         }
 
         private void OpenQr()

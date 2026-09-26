@@ -170,7 +170,7 @@ namespace SmsWorkbench
             JsonElement quotes = UnwrapNexsms(quotesJson, "quote lookup failed");
             if (quotes.ValueKind != JsonValueKind.Array)
             {
-                throw new InvalidDataException("nexsms 价格接口未返回国家列表");
+                throw new InvalidDataException("nexsms price API returned no country list");
             }
 
             var countries = new List<SmsProviderCountryChoice>();
@@ -393,8 +393,8 @@ namespace SmsWorkbench
                 catch (Exception legacyError)
                 {
                     throw new InvalidDataException(
-                        "价格接口不可用：getPricesV3 与 getPrices 都失败"
-                        + $"（V3: {v3Error.Message} / 旧版: {legacyError.Message}）",
+                        "Price API unavailable: getPricesV3 and getPrices both failed"
+                        + $" (V3: {v3Error.Message} / legacy: {legacyError.Message})",
                         legacyError);
                 }
             }
@@ -442,7 +442,7 @@ namespace SmsWorkbench
             using JsonDocument document = JsonDocument.Parse(json);
             if (document.RootElement.ValueKind != JsonValueKind.Object)
             {
-                throw new InvalidDataException("价格接口未返回国家列表");
+                throw new InvalidDataException("Price API returned no country list");
             }
 
             foreach (JsonProperty countryProperty in document.RootElement.EnumerateObject())
@@ -659,7 +659,7 @@ namespace SmsWorkbench
                 // sms-activate, `countryName` for nexsms).
                 if (string.Equals(EnglishName, Id, StringComparison.Ordinal))
                 {
-                    return string.IsNullOrWhiteSpace(ChineseName) ? $"国家 {Id}" : $"{ChineseName} ({Id})";
+                    return string.IsNullOrWhiteSpace(ChineseName) ? $"Country {Id}" : $"{ChineseName} ({Id})";
                 }
                 return string.IsNullOrWhiteSpace(ChineseName)
                     ? $"{EnglishName} ({Id})"
@@ -697,7 +697,7 @@ namespace SmsWorkbench
         public string ProviderIds { get; }
         public decimal NumericPrice { get; }
         public string DisplayName => Count < 0
-            ? $"${Price} / 个 · 库存未查询"
-            : $"${Price} / 个 · 库存 {Count}";
+            ? $"${Price} each · stock not queried"
+            : $"${Price} each · stock {Count}";
     }
 }

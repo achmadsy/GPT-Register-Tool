@@ -18,11 +18,11 @@ namespace SmsWorkbench
 
         private void OpenPayPalLink_Click(object sender, RoutedEventArgs e)
         {
-            PoolRow? row = SelectedEmailRowOrNotify("打开支付链接");
+            PoolRow? row = SelectedEmailRowOrNotify("open payment link");
             if (row == null) return;
             if (string.IsNullOrWhiteSpace(row.PayPalUrl))
             {
-                MessageBox.Show("选中账号没有可打开的支付链接。", "无支付链接", MessageBoxButton.OK, MessageBoxImage.Information);
+                MessageBox.Show("The selected account has no openable payment link.", "No payment link", MessageBoxButton.OK, MessageBoxImage.Information);
                 return;
             }
             OpenPayPalUrl(row.PayPalUrl, row.Identifier);

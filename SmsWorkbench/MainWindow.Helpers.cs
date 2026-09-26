@@ -27,8 +27,8 @@ namespace SmsWorkbench
             }
             catch (Exception ex)
             {
-                Log("界面异步操作失败：" + SensitiveDataSanitizer.Redact(ex.Message));
-                NotifyWarning("操作未完成，请查看运行日志。");
+                Log("UI async operation failed: " + SensitiveDataSanitizer.Redact(ex.Message));
+                NotifyWarning("Operation did not complete. Check the run log.");
             }
         }
 
@@ -260,7 +260,7 @@ namespace SmsWorkbench
             }
             catch (Exception ex)
             {
-                Log("打开失败：" + ex.Message);
+                Log("Open failed: " + ex.Message);
             }
         }
 
@@ -291,14 +291,14 @@ namespace SmsWorkbench
                 if (!Uri.TryCreate(url, UriKind.Absolute, out Uri? uri) ||
                     (uri.Scheme != Uri.UriSchemeHttp && uri.Scheme != Uri.UriSchemeHttps))
                 {
-                    Log("无效链接：" + url);
+                    Log("Invalid URL: " + url);
                     return;
                 }
                 Process.Start(new ProcessStartInfo(url) { UseShellExecute = true });
             }
             catch (Exception ex)
             {
-                Log("打开链接失败：" + ex.Message);
+                Log("Open URL failed: " + ex.Message);
             }
         }
 
@@ -310,13 +310,13 @@ namespace SmsWorkbench
             url = await ResolveBackendPaymentUrlAsync(url, accountEmail);
             if (!IsHttpUrl(url))
             {
-                Log("无效支付链接：" + url);
+                Log("Invalid payment link: " + url);
                 return;
             }
             string chrome = FindChromePath();
             if (chrome.Length == 0)
             {
-                Log("未找到 Chrome，使用系统默认浏览器打开支付链接。");
+                Log("Chrome not found; opening the payment link in the default browser.");
                 OpenUrl(url);
                 return;
             }
@@ -331,11 +331,11 @@ namespace SmsWorkbench
                 psi.ArgumentList.Add("--incognito");
                 psi.ArgumentList.Add(url);
                 Process.Start(psi);
-                Log("已用 Chrome 无痕窗口打开支付链接。");
+                Log("Opened the payment link in a Chrome incognito window.");
             }
             catch (Exception ex)
             {
-                Log("Chrome 打开失败：" + ex.Message);
+                Log("Chrome open failed: " + ex.Message);
                 OpenUrl(url);
             }
         }
@@ -348,17 +348,17 @@ namespace SmsWorkbench
             url = await ResolveBackendPaymentUrlAsync(url, accountEmail);
             if (!IsHttpUrl(url))
             {
-                Log("无效支付链接，无法复制。");
+                Log("Invalid payment link; cannot copy.");
                 return;
             }
             try
             {
                 Clipboard.SetText(url);
-                Log("支付链接已复制。");
+                Log("Payment link copied.");
             }
             catch (Exception ex)
             {
-                Log("复制支付链接失败：" + ex.Message);
+                Log("Copy payment link failed: " + ex.Message);
             }
         }
 
@@ -371,7 +371,7 @@ namespace SmsWorkbench
             }
             catch (Exception ex)
             {
-                Log("读取支付链接 backend 失败：" + SensitiveDataSanitizer.Redact(ex.Message));
+                Log("Payment-link backend read failed: " + SensitiveDataSanitizer.Redact(ex.Message));
                 return "";
             }
         }
@@ -441,17 +441,17 @@ namespace SmsWorkbench
 
         private void NotifySuccess(string message)
         {
-            snackbarService.Show("完成", message, Wpf.Ui.Controls.ControlAppearance.Success, null, TimeSpan.FromSeconds(4));
+            snackbarService.Show("Complete", message, Wpf.Ui.Controls.ControlAppearance.Success, null, TimeSpan.FromSeconds(4));
         }
 
         private void NotifyWarning(string message)
         {
-            snackbarService.Show("注意", message, Wpf.Ui.Controls.ControlAppearance.Caution, null, TimeSpan.FromSeconds(5));
+            snackbarService.Show("Attention", message, Wpf.Ui.Controls.ControlAppearance.Caution, null, TimeSpan.FromSeconds(5));
         }
 
         private void NotifyInfo(string message)
         {
-            snackbarService.Show("提示", message, Wpf.Ui.Controls.ControlAppearance.Info, null, TimeSpan.FromSeconds(4));
+            snackbarService.Show("Info", message, Wpf.Ui.Controls.ControlAppearance.Info, null, TimeSpan.FromSeconds(4));
         }
 
         private void OnPropertyChanged(string name)

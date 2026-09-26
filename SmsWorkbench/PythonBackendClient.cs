@@ -56,14 +56,14 @@ namespace SmsWorkbench
             catch (Win32Exception ex)
             {
                 throw new InvalidOperationException(
-                    $"无法启动 Python 解释器 “{PythonExecutable}”: {ex.Message}。" +
-                    "请安装 Python 3.10+ 并加入 PATH,或在 设置 → 数据与文件 → 运行环境 里配置解释器完整路径。", ex);
+                    $"Could not start the Python interpreter \"{PythonExecutable}\": {ex.Message}. " +
+                    "Install Python 3.10+ and add it to PATH, or set the full interpreter path under Settings → Data & Files → Runtime.", ex);
             }
             catch (System.IO.FileNotFoundException ex)
             {
                 throw new InvalidOperationException(
-                    $"找不到 Python 解释器 “{PythonExecutable}”。" +
-                    "请安装 Python 3.10+ 并加入 PATH,或在 设置 → 数据与文件 → 运行环境 里配置解释器完整路径。", ex);
+                    $"Python interpreter \"{PythonExecutable}\" was not found. " +
+                    "Install Python 3.10+ and add it to PATH, or set the full interpreter path under Settings → Data & Files → Runtime.", ex);
             }
 
             Task stdoutTask = PumpAsync(process.StandardOutput, stdout, BackendOutputChannel.StandardOutput, progress);

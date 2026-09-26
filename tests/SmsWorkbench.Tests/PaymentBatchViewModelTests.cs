@@ -34,7 +34,7 @@ public sealed class PaymentBatchViewModelTests
         Assert.Equal(1, service.LastRequest.Canary);
         Assert.StartsWith("momo_", service.LastRequest.BatchId);
         Assert.NotEqual("probe_id", service.LastRequest.BatchId);
-        Assert.Equal("正在执行 Checkout 与 Stripe init 支付能力探测...", statusDuringRun);
+        Assert.Equal("Running Checkout and Stripe init capability probe...", statusDuringRun);
         Assert.True(viewModel.HasRun);
         Assert.Single(viewModel.Results);
     }
@@ -131,8 +131,8 @@ public sealed class PaymentBatchViewModelTests
         await viewModel.RunCommand.ExecuteAsync(null);
 
         PaymentBatchResultRow row = Assert.Single(viewModel.Results);
-        Assert.Equal("支付链接", row.ResultKind);
-        Assert.Equal("已生成（报告仅保留存在状态）", row.ResultDisplay);
+        Assert.Equal("Payment link", row.ResultKind);
+        Assert.Equal("Generated (report keeps presence only)", row.ResultDisplay);
         Assert.True(row.ResultPresent);
         Assert.False(row.HasCopyableResult);
     }
@@ -191,20 +191,20 @@ public sealed class PaymentBatchViewModelTests
             viewModel.Results,
             link =>
             {
-                Assert.Equal("支付链接", link.ResultKind);
+                Assert.Equal("Payment link", link.ResultKind);
                 Assert.Equal("https://pay.example/short", link.ResultValue);
                 Assert.Equal(link.ResultValue, link.ResultDisplay);
                 Assert.True(link.HasCopyableResult);
             },
             qr =>
             {
-                Assert.Equal("二维码内容", qr.ResultKind);
+                Assert.Equal("QR code content", qr.ResultKind);
                 Assert.Equal("000201010212...", qr.ResultValue);
                 Assert.Equal(qr.ResultValue, qr.ResultDisplay);
             },
             qrFile =>
             {
-                Assert.Equal("二维码文件", qrFile.ResultKind);
+                Assert.Equal("QR code file", qrFile.ResultKind);
                 Assert.Equal("C:\\runtime\\qr-only.png", qrFile.ResultValue);
             },
             failed =>
@@ -223,17 +223,17 @@ public sealed class PaymentBatchViewModelTests
             new[] { new PaymentBatchAccount("user@example.com", true) });
 
         Assert.Equal("momo", viewModel.SelectedMethod.Id);
-        Assert.Equal(new PaymentProxyCountryOption("", "自动（跟随账单区）"), viewModel.CheckoutCountryOptions[0]);
+        Assert.Equal(new PaymentProxyCountryOption("", "Automatic (follow billing region)"), viewModel.CheckoutCountryOptions[0]);
         Assert.Equal(
             PaymentMethods.CheckoutCountryOptions("momo"),
             viewModel.CheckoutCountryOptions.Skip(1).ToArray());
         Assert.Equal(PaymentMethods.ApproveCountryOptions("momo"), viewModel.ApproveCountryOptions);
     }
 
-    private static readonly PaymentProxyCountryOption[] StubCheckoutDefaults = { new("US", "美国 US") };
-    private static readonly PaymentProxyCountryOption[] StubApproveDefaults = { new("JP", "日本 JP") };
-    private static readonly PaymentProxyCountryOption[] StubGoPayCheckoutOverride = { new("ID", "印度尼西亚 ID") };
-    private static readonly PaymentProxyCountryOption[] StubGoPayApproveOverride = { new("TR", "土耳其 TR") };
+    private static readonly PaymentProxyCountryOption[] StubCheckoutDefaults = { new("US", "United States US") };
+    private static readonly PaymentProxyCountryOption[] StubApproveDefaults = { new("JP", "Japan JP") };
+    private static readonly PaymentProxyCountryOption[] StubGoPayCheckoutOverride = { new("ID", "Indonesia ID") };
+    private static readonly PaymentProxyCountryOption[] StubGoPayApproveOverride = { new("TR", "Turkey TR") };
     private static readonly string[] ExpectedCheckoutDefaultCodes = { "", "US" };
     private static readonly string[] ExpectedApproveDefaultCodes = { "JP" };
     private static readonly string[] ExpectedGoPayCheckoutCodes = { "", "ID" };
@@ -304,7 +304,7 @@ public sealed class PaymentBatchViewModelTests
             ManualAccessTokens = "at-one\nat-two"
         };
 
-        Assert.Equal("手动 AT 2 / 10", viewModel.AccountSummary);
+        Assert.Equal("Manual AT 2 / 10", viewModel.AccountSummary);
         viewModel.RunCommand.NotifyCanExecuteChanged();
         Assert.True(viewModel.RunCommand.CanExecute(null));
 
@@ -326,7 +326,7 @@ public sealed class PaymentBatchViewModelTests
         PaymentBatchResultRow row = Assert.Single(viewModel.Results);
         Assert.Equal("User@example.com", row.AccountRef);
         Assert.Equal("100%", row.ProgressText);
-        Assert.Equal("成功", row.ResultStatus);
+        Assert.Equal("Succeeded", row.ResultStatus);
     }
 
     [Fact]
@@ -346,8 +346,8 @@ public sealed class PaymentBatchViewModelTests
 
         PaymentBatchResultRow row = Assert.Single(viewModel.Results);
         Assert.Equal("100%", row.ProgressText);
-        Assert.Equal("成功", row.ResultStatus);
-        Assert.Equal("完成", row.CurrentStage);
+        Assert.Equal("Succeeded", row.ResultStatus);
+        Assert.Equal("Completed", row.CurrentStage);
         }
         finally
         {

@@ -171,13 +171,13 @@ namespace SmsWorkbench
         {
             string method = PaymentMethods.Normalize(paymentMethod);
             if (method.Length == 0)
-                return new SettingsSaveResult(false, "不支持的支付方式。");
+                return new SettingsSaveResult(false, "Unsupported payment method.");
 
             string checkoutCountry = (configuration?.CheckoutCountry ?? "").Trim().ToUpperInvariant();
             string approveCountry = (configuration?.ApproveCountry ?? "").Trim().ToUpperInvariant();
             string updateCountry = (configuration?.UpdateCountry ?? "").Trim().ToUpperInvariant();
             if (!ValidCountry(checkoutCountry) || !ValidCountry(approveCountry) || !ValidCountry(updateCountry))
-                return new SettingsSaveResult(false, "代理出口国家必须为空或两位字母代码。");
+                return new SettingsSaveResult(false, "Proxy egress country must be empty or a two-letter code.");
 
             // The region-filtered active pool the UI shows for the selected
             // country; persisted to checkout_proxy_pool so the backend's stage
@@ -234,7 +234,7 @@ namespace SmsWorkbench
             }
             catch (Exception exception)
             {
-                return new SettingsSaveResult(false, "代理配置保存失败：" + exception.Message);
+                return new SettingsSaveResult(false, "Failed to save proxy settings: " + exception.Message);
             }
         }
 
@@ -320,7 +320,7 @@ namespace SmsWorkbench
                 timeout = Math.Min(12L * 60 * 60 * 1000, timeout);
                 BackendCommandResult result = await _backendTasks.RunAsync(
                     BackendCommand.Create(
-                        "批量协议支付",
+                        "Batch protocol payment",
                         arguments,
                         (int)timeout,
                         new Dictionary<string, string> { ["SMSWORKBENCH_EVENTS"] = "1" }),
@@ -333,7 +333,7 @@ namespace SmsWorkbench
                     return result.Payload.Value;
                 if (!string.IsNullOrWhiteSpace(result.StandardError))
                     throw new InvalidOperationException(result.StandardError);
-                throw new InvalidOperationException("后端未返回 SMSWORKBENCH IPC v1 结果。");
+                throw new InvalidOperationException("Backend returned no SMSWORKBENCH IPC v1 result.");
             }
             finally
             {
@@ -367,16 +367,16 @@ namespace SmsWorkbench
             AddCountryArgument(arguments, "--update-proxy-country", LoadProxyConfiguration(paymentMethod).UpdateCountry);
 
             BackendCommandResult result = await _backendTasks.RunAsync(
-                BackendCommand.Create("测试代理", arguments, 120000),
+                BackendCommand.Create("Test proxy", arguments, 120000),
                 cancellationToken: cancellationToken);
 
             if (result.TimedOut)
-                throw new TimeoutException("代理探测超时（120s）");
+                throw new TimeoutException("Proxy probe timed out (120s)");
             if (result.Payload.HasValue)
                 return result.Payload.Value;
             if (!string.IsNullOrWhiteSpace(result.StandardError))
                 throw new InvalidOperationException(result.StandardError);
-            throw new InvalidOperationException("后端未返回代理探测结果。");
+            throw new InvalidOperationException("Backend returned no proxy probe result.");
         }
 
         private int GetMethodTimeoutMilliseconds(string paymentMethod)

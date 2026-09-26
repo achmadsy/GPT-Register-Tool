@@ -81,7 +81,7 @@ namespace SmsWorkbench
         /// <summary>
         /// Create a standard secondary (cancel) button.
         /// </summary>
-        public static Button CreateCancelButton(string text = "取消", double width = 76)
+        public static Button CreateCancelButton(string text = "Cancel", double width = 76)
         {
             return new Button
             {
@@ -96,7 +96,7 @@ namespace SmsWorkbench
         /// Show a simple info dialog with a single OK button. Uses async/await
         /// instead of blocking ShowDialog().
         /// </summary>
-        public static async Task ShowInfoAsync(Window owner, string title, string message, string okText = "知道了")
+        public static async Task ShowInfoAsync(Window owner, string title, string message, string okText = "Got it")
         {
             var dialog = Create(owner, title, 420, 190, 380, 170);
             var root = CreateRootGrid();
@@ -136,7 +136,7 @@ namespace SmsWorkbench
             Window owner,
             string title,
             string message,
-            string confirmText = "确认",
+            string confirmText = "Confirm",
             bool isDanger = false)
         {
             bool confirmed = false;

@@ -39,7 +39,7 @@ namespace SmsWorkbench
             string accountEmail = (request.AccountEmail ?? "").Trim();
             string sessionFile = (request.SessionFile ?? "").Trim();
             if (accountEmail.Length == 0 && sessionFile.Length == 0)
-                throw new InvalidOperationException("协议支付需要账号或 Session 文件");
+                throw new InvalidOperationException("Protocol payment requires an account or a Session file");
 
             var arguments = new List<string>
             {
@@ -90,8 +90,8 @@ namespace SmsWorkbench
             if (request.ProbeOnly)
             {
                 return new ProtocolPaymentExecutionPlan(
-                    methodLabel + " 支付能力探测",
-                    "正在执行 " + methodLabel + " Checkout / Stripe init 能力探测...",
+                    methodLabel + " payment capability probe",
+                    "Running " + methodLabel + " Checkout / Stripe init capability probe...",
                     arguments,
                     "payment_method_capability_probe",
                     false);
@@ -99,15 +99,15 @@ namespace SmsWorkbench
             if (method == "blik")
             {
                 return new ProtocolPaymentExecutionPlan(
-                    methodLabel + " 协议支付",
-                    "正在执行 " + methodLabel + " 协议支付...",
+                    methodLabel + " protocol payment",
+                    "Running " + methodLabel + " protocol payment...",
                     arguments,
                     "execute_payment",
                     true);
             }
             return new ProtocolPaymentExecutionPlan(
-                methodLabel + " 协议提链",
-                "正在执行 " + methodLabel + " 协议提链...",
+                methodLabel + " protocol extraction",
+                "Running " + methodLabel + " protocol extraction...",
                 arguments,
                 "extract_link",
                 mayHaveSideEffects);
@@ -204,8 +204,8 @@ namespace SmsWorkbench
                     && string.Equals(StringValue(root, "status"), "completed", StringComparison.OrdinalIgnoreCase);
                 bool capabilityCompleted = operation == "payment_method_capability_probe";
                 text.AppendLine(paymentCompleted
-                    ? "[成功] 支付已完成"
-                    : capabilityCompleted ? "[成功] 能力探测完成" : "[成功] 提取成功!");
+                    ? "[Success] Payment completed"
+                    : capabilityCompleted ? "[Success] Capability probe completed" : "[Success] Extraction succeeded!");
                 text.AppendLine();
 
                 AppendNonEmptyString(text, root, "message", "", rejectWhitespace: true);
@@ -215,18 +215,18 @@ namespace SmsWorkbench
                         ? statusCode.ToString()
                         : "";
                     if (probeStatus.Length > 0)
-                        text.AppendLine(CultureInfo.InvariantCulture, $"AT 探测: HTTP {probeStatus}");
+                        text.AppendLine(CultureInfo.InvariantCulture, $"AT probe: HTTP {probeStatus}");
                 }
                 if (root.TryGetProperty("refreshed", out JsonElement refreshed)
                     && refreshed.ValueKind is JsonValueKind.True or JsonValueKind.False)
-                    text.AppendLine(CultureInfo.InvariantCulture, $"JIT 刷新: {(refreshed.GetBoolean() ? "已获取新 AT" : "未刷新")}");
+                    text.AppendLine(CultureInfo.InvariantCulture, $"JIT refresh: {(refreshed.GetBoolean() ? "new AT acquired" : "not refreshed")}");
                 if (root.TryGetProperty("token_telemetry", out JsonElement telemetry)
                     && telemetry.ValueKind == JsonValueKind.Object)
                 {
                     if (telemetry.TryGetProperty("age_seconds", out JsonElement age))
-                        text.AppendLine(CultureInfo.InvariantCulture, $"AT 年龄: {age} 秒");
+                        text.AppendLine(CultureInfo.InvariantCulture, $"AT age: {age} s");
                     if (telemetry.TryGetProperty("expires_in_seconds", out JsonElement expiresIn))
-                        text.AppendLine(CultureInfo.InvariantCulture, $"AT 剩余: {expiresIn} 秒");
+                        text.AppendLine(CultureInfo.InvariantCulture, $"AT remaining: {expiresIn} s");
                 }
 
                 string url = "";
@@ -240,35 +240,35 @@ namespace SmsWorkbench
                     && !string.IsNullOrEmpty(urlElement.GetString()))
                 {
                     url = urlElement.GetString() ?? "";
-                    text.AppendLine(CultureInfo.InvariantCulture, $"链接: {SensitiveDataSanitizer.Redact(url)}");
+                    text.AppendLine(CultureInfo.InvariantCulture, $"Link: {SensitiveDataSanitizer.Redact(url)}");
                 }
 
-                AppendString(text, root, "hosted_url", "托管 URL: ");
-                AppendString(text, root, "link_type", "链接类型: ");
-                AppendString(text, root, "run_id", "任务 ID: ");
-                AppendString(text, root, "manager_state", "状态机: ");
-                AppendString(text, root, "state", "执行状态: ");
-                AppendString(text, root, "operation", "执行动作: ");
-                AppendString(text, root, "subscription_plan", "订阅状态: ");
-                AppendString(text, root, "payment_method", "支付方式: ");
+                AppendString(text, root, "hosted_url", "Hosted URL: ");
+                AppendString(text, root, "link_type", "Link type: ");
+                AppendString(text, root, "run_id", "Run ID: ");
+                AppendString(text, root, "manager_state", "State machine: ");
+                AppendString(text, root, "state", "Run state: ");
+                AppendString(text, root, "operation", "Operation: ");
+                AppendString(text, root, "subscription_plan", "Subscription: ");
+                AppendString(text, root, "payment_method", "Payment method: ");
 
                 if (root.TryGetProperty("card_last4", out JsonElement last4)
                     && !string.IsNullOrWhiteSpace(last4.GetString()))
-                    text.AppendLine("卡片: [REDACTED]");
+                    text.AppendLine("Card: [REDACTED]");
 
                 string qrPath = root.TryGetProperty("qr_path", out JsonElement qrPathElement)
                     ? qrPathElement.GetString() ?? ""
                     : "";
                 if (qrPath.Length > 0)
-                    text.AppendLine(CultureInfo.InvariantCulture, $"QR 图片: {qrPath}");
+                    text.AppendLine(CultureInfo.InvariantCulture, $"QR image: {qrPath}");
 
                 AppendString(text, root, "cs_id", "CS ID: ");
                 if (root.TryGetProperty("amount", out JsonElement amount))
-                    text.AppendLine(CultureInfo.InvariantCulture, $"金额: {amount}");
-                AppendString(text, root, "currency", "货币: ");
-                AppendNonEmptyString(text, root, "coupon_name", "优惠券: ", rejectWhitespace: false);
+                    text.AppendLine(CultureInfo.InvariantCulture, $"Amount: {amount}");
+                AppendString(text, root, "currency", "Currency: ");
+                AppendNonEmptyString(text, root, "coupon_name", "Coupon: ", rejectWhitespace: false);
                 if (root.TryGetProperty("approval_ok", out JsonElement approval))
-                    text.AppendLine(CultureInfo.InvariantCulture, $"审批状态: {(approval.GetBoolean() ? "已批准" : "待处理/失败")}");
+                    text.AppendLine(CultureInfo.InvariantCulture, $"Approval: {(approval.GetBoolean() ? "approved" : "pending/failed")}");
                 if (root.TryGetProperty("expires_at", out JsonElement expiresAt))
                 {
                     try
@@ -277,15 +277,15 @@ namespace SmsWorkbench
                         if (expires > 0)
                         {
                             DateTime local = DateTimeOffset.FromUnixTimeSeconds(expires).LocalDateTime;
-                            text.AppendLine(CultureInfo.InvariantCulture, $"过期时间: {local:yyyy-MM-dd HH:mm:ss}");
+                            text.AppendLine(CultureInfo.InvariantCulture, $"Expires: {local:yyyy-MM-dd HH:mm:ss}");
                         }
                     }
                     catch
                     {
                     }
                 }
-                AppendString(text, root, "target_country", "国家: ");
-                AppendString(text, root, "warning", "警告: ");
+                AppendString(text, root, "target_country", "Country: ");
+                AppendString(text, root, "warning", "Warning: ");
 
                 return new ProtocolPaymentResultPresentation(
                     text.ToString().TrimEnd(),
@@ -318,15 +318,15 @@ namespace SmsWorkbench
             string operation = plan?.Operation ?? "";
             string text = terminalState switch
             {
-                "unknown" => "[结果未知，请先核对账号状态，不要重试]",
-                "cancelled" => "[已取消] 协议支付任务已终止",
-                "timed_out" => "[已超时] 协议支付任务超时，可按策略重试",
-                _ => "[失败] 协议支付任务未完成"
+                "unknown" => "[Outcome unknown. Check the account status first; do not retry]",
+                "cancelled" => "[Cancelled] Protocol payment run terminated",
+                "timed_out" => "[Timed out] Protocol payment run timed out; retry per policy",
+                _ => "[Failed] Protocol payment run did not complete"
             };
             if (operation.Length > 0)
-                text += $"\n执行动作: {operation}";
+                text += $"\nOperation: {operation}";
             if (requiresReconciliation)
-                text += "\n需要对账：请求可能已到达支付服务。";
+                text += "\nReconciliation required: the request may have reached the payment service.";
             return new ProtocolPaymentResultPresentation(
                 text,
                 "",
@@ -355,38 +355,38 @@ namespace SmsWorkbench
                 && state != "cancelled";
             string prefix = state switch
             {
-                "unknown" => "[结果未知，请先核对账号状态，不要重试]",
-                "cancelled" => "[已取消]",
-                "timed_out" => "[已超时]",
-                _ => "[失败]"
+                "unknown" => "[Outcome unknown. Check the account status first; do not retry]",
+                "cancelled" => "[Cancelled]",
+                "timed_out" => "[Timed out]",
+                _ => "[Failed]"
             };
-            string summary = FirstNonEmpty(decisionText, error, message, decision, "协议支付未完成");
+            string summary = FirstNonEmpty(decisionText, error, message, decision, "Protocol payment did not complete");
             var text = new StringBuilder($"{prefix} {summary}".TrimEnd());
             if (decision.Length > 0 && !string.Equals(decision, summary, StringComparison.Ordinal))
-                text.AppendLine().Append("判定: ").Append(SensitiveDataSanitizer.Redact(decision));
+                text.AppendLine().Append("Decision: ").Append(SensitiveDataSanitizer.Redact(decision));
             if (errorCode.Length > 0)
-                text.AppendLine().Append("错误代码: ").Append(SensitiveDataSanitizer.Redact(errorCode));
+                text.AppendLine().Append("Error code: ").Append(SensitiveDataSanitizer.Redact(errorCode));
             string errorStage = StringValue(root, "error_stage");
             if (errorStage.Length > 0)
-                text.AppendLine().Append("错误阶段: ").Append(SensitiveDataSanitizer.Redact(errorStage));
+                text.AppendLine().Append("Error stage: ").Append(SensitiveDataSanitizer.Redact(errorStage));
             string paymentMethod = StringValue(root, "payment_method");
             if (paymentMethod.Length > 0)
-                text.AppendLine().Append("支付方式: ").Append(SensitiveDataSanitizer.Redact(paymentMethod));
+                text.AppendLine().Append("Payment method: ").Append(SensitiveDataSanitizer.Redact(paymentMethod));
             string subscriptionPlan = StringValue(root, "subscription_plan");
             if (subscriptionPlan.Length > 0)
-                text.AppendLine().Append("订阅状态: ").Append(SensitiveDataSanitizer.Redact(subscriptionPlan));
+                text.AppendLine().Append("Subscription: ").Append(SensitiveDataSanitizer.Redact(subscriptionPlan));
             if (root.TryGetProperty("amount_due", out JsonElement amountDue)
                 && amountDue.ValueKind is JsonValueKind.Number or JsonValueKind.String)
             {
-                text.AppendLine().Append("应付金额: ").Append(amountDue.ToString());
+                text.AppendLine().Append("Amount due: ").Append(amountDue.ToString());
                 string currency = StringValue(root, "currency");
                 if (currency.Length > 0)
                     text.Append(' ').Append(SensitiveDataSanitizer.Redact(currency.ToUpperInvariant()));
             }
             if (requiresReconciliation)
-                text.AppendLine().Append("需要对账：请求可能已到达支付服务。");
+                text.AppendLine().Append("Reconciliation required: the request may have reached the payment service.");
             else if (retryable)
-                text.AppendLine().Append("可重试: 是");
+                text.AppendLine().Append("Retryable: yes");
             return new ProtocolPaymentResultPresentation(
                 text.ToString(),
                 "",

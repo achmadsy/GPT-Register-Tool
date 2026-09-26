@@ -344,7 +344,7 @@ class ProviderParityTests(unittest.TestCase):
         self.assertIn("catalogError = exc.Message;", code,
                       "the catalog failure reason is no longer captured")
         # 无路可退时，原因必须被**插值**进弹窗正文，而不是只写一句通用的「读取失败」。
-        self.assertRegex(code, r"无法读取 OpenAI 号码地区和价格档位：\{catalogError\}")
+        self.assertRegex(code, r"Could not read OpenAI number regions and price tiers: \{catalogError\}")
         # 有路可退时，原因必须进日志（含占位符 ``{Error}`` 与实参 ``catalogError``）。
         self.assertRegex(code, r"catalog unavailable \(\{Error\}\)")
         self.assertRegex(code, r'provider\.Label,\s*catalogError\)')
@@ -363,7 +363,7 @@ class ProviderParityTests(unittest.TestCase):
         """
         text = DIALOG.read_text(encoding="utf-8")
         code = strip_csharp_comments(text)
-        marker = 'provider.Label + " 加载失败"'
+        marker = 'provider.Label + " load failed"'
         self.assertIn(marker, code, "the load-failure dialog disappeared")
 
         # 加载失败弹窗必须落在「在线失败 且 配置回退不可用」这一支里。

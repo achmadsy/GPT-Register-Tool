@@ -79,7 +79,7 @@ public sealed class SmsProviderNexsmsCatalogTests
         Assert.Equal(new[] { "0.1207", "0.1428", "0.1606" },
                      indonesia.Tiers.Select(tier => tier.Price).ToArray());
         Assert.Equal(56174, indonesia.Tiers[0].Count);
-        Assert.Equal("$0.1207 / 个 · 库存 56174", indonesia.Tiers[0].DisplayName);
+        Assert.Equal("$0.1207 each · stock 56174", indonesia.Tiers[0].DisplayName);
     }
 
     [Fact]

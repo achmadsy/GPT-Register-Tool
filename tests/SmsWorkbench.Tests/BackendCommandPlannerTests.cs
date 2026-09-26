@@ -14,7 +14,7 @@ public sealed class BackendCommandPlannerTests
             proxyPool: new[] { "http://proxy1:8080", "http://proxy2:8080" },
             workers: 3);
 
-        Assert.Equal("邮箱池注册", plan.TaskName);
+        Assert.Equal("Mailbox pool registration", plan.TaskName);
         Assert.Contains("--count", plan.Arguments);
         Assert.Contains("5", plan.Arguments);
         Assert.Contains("--workers", plan.Arguments);
@@ -37,7 +37,7 @@ public sealed class BackendCommandPlannerTests
     public void CreateMailboxFileRegistration_IncludesRegistrationAtOnly()
     {
         var plan = BackendCommandPlanner.CreateMailboxFileRegistration(
-            "测试注册",
+            "Test registration",
             "--mailbox-file",
             "C:\\test.txt",
             count: 3,
@@ -45,7 +45,7 @@ public sealed class BackendCommandPlannerTests
             registrationAtOnly: true,
             proxyPool: new[] { "http://proxy:8080" });
 
-        Assert.Equal("测试注册", plan.TaskName);
+        Assert.Equal("Test registration", plan.TaskName);
         Assert.Contains("--registration-at-only", plan.Arguments);
         Assert.Contains("--no-phone-reuse", plan.Arguments);
         Assert.Contains("--mailbox-file", plan.Arguments);
@@ -57,7 +57,7 @@ public sealed class BackendCommandPlannerTests
     public void CreateMailboxFileRegistration_WithoutRegistrationAtOnly_OmitsFlag()
     {
         var plan = BackendCommandPlanner.CreateMailboxFileRegistration(
-            "测试", "--mailbox-file", "C:\\test.txt", 1, 2,
+            "Test", "--mailbox-file", "C:\\test.txt", 1, 2,
             registrationAtOnly: false, proxyPool: Array.Empty<string>());
 
         Assert.DoesNotContain("--registration-at-only", plan.Arguments);
@@ -68,7 +68,7 @@ public sealed class BackendCommandPlannerTests
     public void CreateMailboxFileRegistration_WithDisable2fa_AddsNo2faFlag()
     {
         var plan = BackendCommandPlanner.CreateMailboxFileRegistration(
-            "测试", "--chatai-mailbox-file", "C:\\test.txt", 5, 5,
+            "Test", "--chatai-mailbox-file", "C:\\test.txt", 5, 5,
             registrationAtOnly: true, proxyPool: Array.Empty<string>(), disable2fa: true);
 
         Assert.Contains("--no-2fa", plan.Arguments);
@@ -78,7 +78,7 @@ public sealed class BackendCommandPlannerTests
     public void CreateMailboxFileRegistration_DefaultOmitsNo2faFlag()
     {
         var plan = BackendCommandPlanner.CreateMailboxFileRegistration(
-            "测试", "--chatai-mailbox-file", "C:\\test.txt", 5, 5,
+            "Test", "--chatai-mailbox-file", "C:\\test.txt", 5, 5,
             registrationAtOnly: true, proxyPool: Array.Empty<string>());
 
         Assert.DoesNotContain("--no-2fa", plan.Arguments);
@@ -88,7 +88,7 @@ public sealed class BackendCommandPlannerTests
     public void CreateMailboxFileRegistration_WithPromotionCheck_AddsPostRegistrationFlag()
     {
         var plan = BackendCommandPlanner.CreateMailboxFileRegistration(
-            "测试", "--mailbox-file", "C:\\test.txt", 2, 2,
+            "Test", "--mailbox-file", "C:\\test.txt", 2, 2,
             registrationAtOnly: true,
             proxyPool: Array.Empty<string>(),
             checkPromotion: true);
@@ -126,7 +126,7 @@ public sealed class BackendCommandPlannerTests
 
         // The label carries no vendor: this plan does not override
         // `phone_reuse.source`, so naming one would misreport the run.
-        Assert.Equal("手机号注册", plan.TaskName);
+        Assert.Equal("Phone registration", plan.TaskName);
         Assert.DoesNotContain("--phone-source", plan.Arguments);
         Assert.Contains("--phone-register", plan.Arguments);
         Assert.Contains("--desktop-ipc", plan.Arguments);
@@ -143,7 +143,7 @@ public sealed class BackendCommandPlannerTests
             workers: 3,
             proxyPool: Array.Empty<string>());
 
-        Assert.Equal("CFWorker邮箱注册", plan.TaskName);
+        Assert.Equal("CFWorker mailbox registration", plan.TaskName);
         Assert.Contains("--buy-cfworker-mailbox", plan.Arguments);
         Assert.Contains("--cfworker-domain", plan.Arguments);
         Assert.Contains("example.cloud", plan.Arguments);
@@ -189,7 +189,7 @@ public sealed class BackendCommandPlannerTests
             count: 5,
             proxyPool: Array.Empty<string>());
 
-        Assert.Contains("重新注册失败账号", plan.TaskName);
+        Assert.Contains("Re-register failed accounts", plan.TaskName);
         Assert.Contains("5", plan.TaskName);
         Assert.Contains("--chatai-mailbox-file", plan.Arguments);
     }
@@ -503,7 +503,7 @@ public sealed class BackendCommandPlannerTests
     public void CreateRebuildSqlite_HasMinimalArgs()
     {
         var plan = BackendCommandPlanner.CreateRebuildSqlite();
-        Assert.Equal("重建SQLite索引", plan.TaskName);
+        Assert.Equal("Rebuild SQLite index", plan.TaskName);
         Assert.Contains("--rebuild-sqlite", plan.Arguments);
         Assert.Single(plan.Arguments);
     }

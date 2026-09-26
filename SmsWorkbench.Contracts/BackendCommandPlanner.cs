@@ -46,7 +46,7 @@ namespace SmsWorkbench
             };
             AppendNoPhoneReuse(args);
             AppendProxyPool(args, proxyPool);
-            return new BackendCommandPlan("邮箱池注册", args);
+            return new BackendCommandPlan("Mailbox pool registration", args);
         }
 
         /// <summary>
@@ -88,7 +88,7 @@ namespace SmsWorkbench
             IReadOnlyList<string> proxyPool)
         {
             return CreateMailboxFileRegistration(
-                "重新注册失败账号 (" + Count(count) + ")",
+                "Re-register failed accounts (" + Count(count) + ")",
                 mailboxArgument,
                 mailboxFile,
                 count,
@@ -109,7 +109,7 @@ namespace SmsWorkbench
             AppendProxyPool(args, proxyPool);
             // No vendor in the label: the provider is whatever
             // `phone_reuse.source` selects, and this plan does not override it.
-            return new BackendCommandPlan("手机号注册", args);
+            return new BackendCommandPlan("Phone registration", args);
         }
 
         public static BackendCommandPlan CreateCfWorkerRegistration(
@@ -132,7 +132,7 @@ namespace SmsWorkbench
             AppendNo2fa(args, disable2fa);
             AppendCheckPromotion(args, checkPromotion);
             AppendProxyPool(args, proxyPool);
-            return new BackendCommandPlan("CFWorker邮箱注册", args);
+            return new BackendCommandPlan("CFWorker mailbox registration", args);
         }
 
         public static BackendCommandPlan CreateRemailTargetRegistration(
@@ -154,7 +154,7 @@ namespace SmsWorkbench
             AppendNo2fa(args, disable2fa);
             AppendCheckPromotion(args, checkPromotion);
             AppendProxyPool(args, proxyPool);
-            return new BackendCommandPlan("ReMail 长效邮箱注册 (" + Count(count) + ")", args);
+            return new BackendCommandPlan("ReMail registration (" + Count(count) + ")", args);
         }
 
         public static BackendCommandPlan CreateSmailrRegistration(
@@ -177,7 +177,7 @@ namespace SmsWorkbench
             AppendNo2fa(args, disable2fa);
             AppendCheckPromotion(args, checkPromotion);
             AppendProxyPool(args, proxyPool);
-            return new BackendCommandPlan("Smailr 邮箱注册", args);
+            return new BackendCommandPlan("Smailr mailbox registration", args);
         }
 
         // ── One-click SMS (接码) ────────────────────────────────────────
@@ -221,7 +221,7 @@ namespace SmsWorkbench
             }
             AppendProxyPool(args, proxyPool);
             return new BackendCommandPlan(
-                "一键接码(" + Count(targets.Count) + ")",
+                "One-click SMS (" + Count(targets.Count) + ")",
                 args,
                 TemporaryFiles: tempFiles);
         }
@@ -279,7 +279,7 @@ namespace SmsWorkbench
             }
             AppendProxyPool(args, proxyPool);
             return new BackendCommandPlan(
-                "账号测活(" + Count(targets.Count) + ")",
+                "Account check (" + Count(targets.Count) + ")",
                 args,
                 TemporaryFiles: tempFiles,
                 // Leave drain time for the final IPC envelope and partial
@@ -318,7 +318,7 @@ namespace SmsWorkbench
             if (!string.IsNullOrWhiteSpace(cfworkerDomain))
                 args.AddRange(new[] { "--cfworker-domain", cfworkerDomain.Trim() });
             AppendProxyPool(args, proxyPool);
-            return new BackendCommandPlan("批量邮箱换绑(" + Count(targets.Count) + ")", args, TemporaryFiles: tempFiles, TimeoutMilliseconds: 900000);
+            return new BackendCommandPlan("Batch email change (" + Count(targets.Count) + ")", args, TemporaryFiles: tempFiles, TimeoutMilliseconds: 900000);
         }
 
         public static BackendCommandPlan CreatePromotionCheck(
@@ -348,7 +348,7 @@ namespace SmsWorkbench
             }
             AppendProxyPool(args, proxyPool);
             return new BackendCommandPlan(
-                "账号优惠检测(" + Count(targets.Count) + ")",
+                "Promotion check (" + Count(targets.Count) + ")",
                 args,
                 TemporaryFiles: tempFiles);
         }
@@ -365,7 +365,7 @@ namespace SmsWorkbench
                 "--refresh-timeout", Count(refreshTimeoutSeconds),
             };
             AppendProxyPool(args, proxyPool);
-            return new BackendCommandPlan("账号测活", args);
+            return new BackendCommandPlan("Account check", args);
         }
 
         // ── Deletion ────────────────────────────────────────────────────
@@ -378,7 +378,7 @@ namespace SmsWorkbench
                 "--email", RequireEmail(email),
                 "--desktop-ipc",
             };
-            return new BackendCommandPlan("删除账号", args, TimeoutMilliseconds: 120000);
+            return new BackendCommandPlan("Delete account", args, TimeoutMilliseconds: 120000);
         }
 
         /// <summary>
@@ -399,7 +399,7 @@ namespace SmsWorkbench
                 "--desktop-ipc",
             };
             return new BackendCommandPlan(
-                "批量删除账号 (" + Count(targets.Count) + ")",
+                "Batch delete accounts (" + Count(targets.Count) + ")",
                 args,
                 TemporaryFiles: new[] { emailFile },
                 TimeoutMilliseconds: 120000);
@@ -445,7 +445,7 @@ namespace SmsWorkbench
                 "--import-target", normalized,
             };
             return new BackendCommandPlan(
-                "一键导入" + ImportTargetLabel(normalized) + " (" + Count(targets.Count) + ")",
+                "Send to " + ImportTargetLabel(normalized) + " (" + Count(targets.Count) + ")",
                 args,
                 TemporaryFiles: new[] { emailFile });
         }
@@ -486,7 +486,7 @@ namespace SmsWorkbench
                 "--import-target", normalized,
             };
             return new BackendCommandPlan(
-                "一键导入" + ImportTargetLabel(normalized),
+                "Send to " + ImportTargetLabel(normalized),
                 args,
                 TemporaryFiles: new[] { emailFile });
         }
@@ -506,7 +506,7 @@ namespace SmsWorkbench
                 "--convert-format", normalized,
                 "--convert-output", RequireArgument(outputPath, nameof(outputPath)),
             };
-            return new BackendCommandPlan("导出账号转换(" + normalized + ")", args);
+            return new BackendCommandPlan("Export conversion (" + normalized + ")", args);
         }
 
         // ── Refresh / maintenance ───────────────────────────────────────
@@ -515,12 +515,12 @@ namespace SmsWorkbench
         {
             var args = new List<string> { "--email", RequireEmail(email), "--refresh-session" };
             AppendSessionFile(args, sessionFile);
-            return new BackendCommandPlan("刷新Session", args);
+            return new BackendCommandPlan("Refresh session", args);
         }
 
         public static BackendCommandPlan CreateRebuildSqlite()
         {
-            return new BackendCommandPlan("重建SQLite索引", new List<string> { "--rebuild-sqlite" });
+            return new BackendCommandPlan("Rebuild SQLite index", new List<string> { "--rebuild-sqlite" });
         }
 
         // ── Inbox ───────────────────────────────────────────────────────
@@ -566,7 +566,7 @@ namespace SmsWorkbench
             if (token.Length > 0)
                 environment["REMAIL_SERVICE_TOKEN"] = token;
             return new BackendCommandPlan(
-                "查看收件箱",
+                "View inbox",
                 args,
                 EnvironmentVariables: environment,
                 TemporaryFiles: tempFiles,

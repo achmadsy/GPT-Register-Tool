@@ -94,11 +94,11 @@ public sealed class ScanResultPanelStoryTests
         (List<string> panel, string? total) = RenderDesktopRun(run);
 
         Assert.Equal("3", total);
-        Assert.Contains("── 账号测活开始 · 共 3 个账号 ──", panel);
-        Assert.Contains("── 账号测活结束 · 正常 1/3，AT失效 1，掉号 1，超时 0 ──", panel);
+        Assert.Contains("── Account check started · 3 accounts ──", panel);
+        Assert.Contains("── Account check finished · Normal 1/3, AT invalid 1, deactivated 1, timed out 0 ──", panel);
         Assert.Contains("[!] b@example.com: AT 失效（HTTP 401）", panel);
         // Per-account events must NOT duplicate the Python failure lines.
-        Assert.DoesNotContain(panel, l => l.Contains("账号测活开始") && l.Contains("b@example.com"));
+        Assert.DoesNotContain(panel, l => l.Contains("Account check started") && l.Contains("b@example.com"));
         // No raw English reason survives into the panel.
         Assert.DoesNotContain(panel, l => l.Contains("token_invalid"));
         Assert.DoesNotContain(panel, l => l.Contains("Liveness check"));
@@ -120,8 +120,8 @@ public sealed class ScanResultPanelStoryTests
         (List<string> panel, string? total) = RenderDesktopRun(run);
 
         Assert.Equal("2", total);
-        Assert.Contains("── 账号优惠检测开始 · 共 2 个账号 ──", panel);
-        Assert.Contains("── 账号优惠检测结束 · 完成 2 个账号，成功 1，401 1，传输失败 0 ──", panel);
+        Assert.Contains("── Promotion check started · 2 accounts ──", panel);
+        Assert.Contains("── Promotion check finished · 2 accounts done, 1 succeeded, 401 1, transport failed 0 ──", panel);
         Assert.Contains("[!] b@example.com: AT 失效（HTTP 401）", panel);
     }
 

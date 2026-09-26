@@ -83,7 +83,7 @@ namespace SmsWorkbench
         /// previous one. It is intentionally not a pure `====` bar — those are
         /// dropped by <see cref="IsBannerBar"/>.</summary>
         public static string TaskStartLine(string taskName)
-            => $"=========== 启动：{taskName} ==========";
+            => $"=========== Start: {taskName} ==========";
 
         /// <summary>
         /// Map one raw backend line to its panel form. Returns null when the
@@ -117,7 +117,7 @@ namespace SmsWorkbench
             if (body.StartsWith(EnvelopePrefix, StringComparison.Ordinal))
                 return IsTerminalResultFrame(body)
                     ? null
-                    : "[*] 任务返回结构化结果（详情见结果弹窗与任务列表）";
+                    : "[*] Task returned a structured result (see the result dialog and task list)";
 
             if (IsNoiseLine(body))
                 return null;
@@ -128,11 +128,11 @@ namespace SmsWorkbench
             Match batchHeader = Regex.Match(
                 body, @"^ChatGPT Email Batch Registration - (\d+) accounts?$");
             if (batchHeader.Success)
-                return $"── 批量注册开始 · 共 {batchHeader.Groups[1].Value} 个账号 ──";
+                return $"── Batch registration started · {batchHeader.Groups[1].Value} accounts ──";
 
             Match accountHeader = Regex.Match(body, @"^Account (\d+)/(\d+)$");
             if (accountHeader.Success)
-                return $"── 账号 {accountHeader.Groups[1].Value}/{accountHeader.Groups[2].Value} ──";
+                return $"── Account {accountHeader.Groups[1].Value}/{accountHeader.Groups[2].Value} ──";
 
             // Strip the Python-side indent. `print(f"  Protocol ...")` exists
             // to make terminal output readable; in the panel the `[HH:mm:ss]`
@@ -191,34 +191,34 @@ namespace SmsWorkbench
             if (progressEvent == null) return null;
             string domain = progressEvent.Domain ?? "";
             if (domain == "registration" && progressEvent.Stage == "registration_status_changed")
-                return $"注册 · {progressEvent.AccountRef} · 半注册";
+                return $"Registration · {progressEvent.AccountRef} · Partially registered";
             if (domain == "registration" && progressEvent.Stage == "mailboxes_skipped")
             {
                 string detail = (progressEvent.Detail ?? "").Trim();
-                return detail.Length > 0 ? $"注册 · {detail}" : "注册 · 后端剔除部分邮箱（详见后端日志）";
+                return detail.Length > 0 ? $"Registration · {detail}" : "Registration · Backend excluded some mailboxes (see backend log)";
             }
             if (Array.FindIndex(ScanLikeDomains,
                     d => string.Equals(d, domain, StringComparison.OrdinalIgnoreCase)) < 0)
                 return null;
 
             string label = string.Equals(domain, "account_promotion", StringComparison.OrdinalIgnoreCase)
-                ? "账号优惠检测"
+                ? "Promotion check"
                 : string.Equals(domain, "one_click_sms", StringComparison.OrdinalIgnoreCase)
-                    ? "一键接码"
-                    : "账号测活";
+                    ? "One-click SMS"
+                    : "Account check";
 
             switch (progressEvent.Stage)
             {
                 case "batch_started":
                     return progressEvent.Total > 0
-                        ? $"── {label}开始 · 共 {progressEvent.Total} 个账号 ──"
-                        : $"── {label}开始 ──";
+                        ? $"── {label} started · {progressEvent.Total} accounts ──"
+                        : $"── {label} started ──";
                 case "batch_completed":
                     {
                         string detail = (progressEvent.Detail ?? "").Trim();
                         return detail.Length > 0
-                            ? $"── {label}结束 · {detail} ──"
-                            : $"── {label}结束 ──";
+                            ? $"── {label} finished · {detail} ──"
+                            : $"── {label} finished ──";
                     }
                 default:
                     // One-click SMS has no other operator-facing stream: retain
@@ -231,17 +231,17 @@ namespace SmsWorkbench
                     if (suffix.Length == 0 && progressEvent.FailureClass.Length > 0)
                         suffix = progressEvent.FailureClass;
                     if (account.Length == 0)
-                        return suffix.Length > 0 ? $"一键接码 · {suffix}" : null;
+                        return suffix.Length > 0 ? $"One-click SMS · {suffix}" : null;
                     string state = progressEvent.Status switch
                     {
-                        "success" or "completed" => "成功",
-                        "failed" or "error" => "失败",
-                        "cancelled" => "已取消",
-                        _ => "进行中",
+                        "success" or "completed" => "succeeded",
+                        "failed" or "error" => "failed",
+                        "cancelled" => "cancelled",
+                        _ => "in progress",
                     };
                     return suffix.Length > 0
-                        ? $"一键接码 · {account} · {progressEvent.Stage} · {state} · {suffix}"
-                        : $"一键接码 · {account} · {progressEvent.Stage} · {state}";
+                        ? $"One-click SMS · {account} · {progressEvent.Stage} · {state} · {suffix}"
+                        : $"One-click SMS · {account} · {progressEvent.Stage} · {state}";
             }
         }
 
@@ -379,10 +379,10 @@ namespace SmsWorkbench
         public static string Summarize(JsonDocument? parsed)
         {
             if (parsed == null)
-                return "[*] 后端返回了无法解析的多行输出（已在日志中折叠）";
+                return "[*] Backend returned unparseable multi-line output (folded in log)";
             JsonElement root = parsed.RootElement;
             if (root.ValueKind != JsonValueKind.Object)
-                return "[*] 后端返回了结构化结果（已在日志中折叠）";
+                return "[*] Backend returned a structured result (folded in log)";
 
             bool hasResults = root.TryGetProperty("results", out JsonElement results)
                 && results.ValueKind == JsonValueKind.Array;
@@ -409,16 +409,16 @@ namespace SmsWorkbench
                     if (reason.Contains("account_deactivated", StringComparison.OrdinalIgnoreCase))
                         deactivated++;
                 }
-                var summary = new StringBuilder("[*] 汇总：");
-                summary.Append($"成功 {ok}/{total}");
+                var summary = new StringBuilder("[*] Summary: ");
+                summary.Append($"Succeeded {ok}/{total}");
                 if (deactivated > 0)
-                    summary.Append($" · 注销 {deactivated}");
+                    summary.Append($" · Deactivated {deactivated}");
                 if (root.TryGetProperty("trial_eligible", out JsonElement trial)
                     && trial.ValueKind == JsonValueKind.Number
                     && trial.TryGetInt32(out int trialCount)
                     && trialCount > 0)
-                    summary.Append($" · 可试优惠 {trialCount}");
-                summary.Append($"（{failures.Count} 项失败明细已折叠）");
+                    summary.Append($" · Trial eligible {trialCount}");
+                summary.Append($" ({failures.Count} failure details folded)");
                 return summary.ToString();
             }
 
@@ -428,10 +428,10 @@ namespace SmsWorkbench
                 string error = root.TryGetProperty("error", out JsonElement errorElement)
                     ? errorElement.ToString() ?? ""
                     : "";
-                return $"[!] 后端返回失败：{Trim(error, 160)}";
+                return $"[!] Backend failed: {Trim(error, 160)}";
             }
 
-            return "[*] 后端返回了结构化结果（已在日志中折叠）";
+            return "[*] Backend returned a structured result (folded in log)";
         }
 
         private static string ReasonOf(JsonElement item)

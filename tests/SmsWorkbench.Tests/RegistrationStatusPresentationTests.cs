@@ -13,29 +13,29 @@ public class RegistrationStatusPresentationTests
     public void PartialRegistrationIsNotAnUnusedMailbox(string state)
     {
         Assert.True(RegistrationStatusPresentation.IsPartial(state));
-        Assert.Equal("半注册", RegistrationStatusPresentation.MailboxStatus(state, "可收信"));
+        Assert.Equal("Partially registered", RegistrationStatusPresentation.MailboxStatus(state, "Can receive mail"));
         Assert.True(RegistrationStatusPresentation.NeedsAttention(new PoolRow { RegistrationStatus = state }));
     }
 
     [Fact]
     public void OrdinaryMailboxAndRegisteredAccountKeepTheirStatus()
     {
-        Assert.Equal("可收信", RegistrationStatusPresentation.MailboxStatus("unknown", "可收信"));
+        Assert.Equal("Can receive mail", RegistrationStatusPresentation.MailboxStatus("unknown", "Can receive mail"));
         Assert.False(RegistrationStatusPresentation.IsPartial("registered"));
-        Assert.Equal("已注册", AccountStatusInterpreter.DisplayAccountStatus("registered", "", "AT", "", "", "", ""));
+        Assert.Equal("Registered", AccountStatusInterpreter.DisplayAccountStatus("registered", "", "AT", "", "", "", ""));
     }
 
     [Fact]
     public void PartialRegistrationHasWarningSeverityAndExplicitAccountLabel()
     {
-        Assert.Equal("warn", new StatusSeverityConverter().Convert("半注册", typeof(string), null!, CultureInfo.InvariantCulture));
-        Assert.Equal("半注册", AccountStatusInterpreter.DisplayAccountStatus("partial_registered", "", "", "user_already_exists", "", "", ""));
+        Assert.Equal("warn", new StatusSeverityConverter().Convert("Partially registered", typeof(string), null!, CultureInfo.InvariantCulture));
+        Assert.Equal("Partially registered", AccountStatusInterpreter.DisplayAccountStatus("partial_registered", "", "", "user_already_exists", "", "", ""));
     }
 
     [Fact]
     public void PartialRegistrationEventHasAnOperatorLine()
     {
         var progress = new BackendProgressEvent("registration", "run", "abc123", "", "registration_status_changed", "running", "半注册");
-        Assert.Equal("注册 · abc123 · 半注册", BackendLogPresenter.ProgressEventLine(progress));
+        Assert.Equal("Registration · abc123 · Partially registered", BackendLogPresenter.ProgressEventLine(progress));
     }
 }

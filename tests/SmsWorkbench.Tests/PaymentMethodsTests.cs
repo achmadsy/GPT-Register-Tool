@@ -65,16 +65,16 @@ public sealed class PaymentMethodsTests
     public void CountryOptionsComeFromTheTopLevelCatalogDefaults()
     {
         Assert.Equal(13, PaymentMethods.CheckoutCountryOptions("momo").Count);
-        Assert.Equal(new PaymentProxyCountryOption("US", "美国 US"), PaymentMethods.CheckoutCountryOptions("momo")[0]);
-        Assert.Equal(new PaymentProxyCountryOption("BR", "巴西 BR"), PaymentMethods.CheckoutCountryOptions("momo")[12]);
+        Assert.Equal(new PaymentProxyCountryOption("US", "United States US"), PaymentMethods.CheckoutCountryOptions("momo")[0]);
+        Assert.Equal(new PaymentProxyCountryOption("BR", "Brazil BR"), PaymentMethods.CheckoutCountryOptions("momo")[12]);
         Assert.Equal(
             PaymentMethods.CheckoutCountryOptions("momo"),
             PaymentMethods.ApproveCountryOptions("momo"));
         Assert.Equal(16, PaymentMethods.StageCountryOptions.Count);
-        Assert.Equal(new PaymentProxyCountryOption("US", "美国 US"), PaymentMethods.StageCountryOptions[0]);
+        Assert.Equal(new PaymentProxyCountryOption("US", "United States US"), PaymentMethods.StageCountryOptions[0]);
         Assert.Equal(20, PaymentMethods.BillingCountryOptions.Count);
-        Assert.Equal(new PaymentProxyCountryOption("US", "US - 美国"), PaymentMethods.BillingCountryOptions[0]);
-        Assert.Equal(new PaymentProxyCountryOption("IE", "IE - 爱尔兰"), PaymentMethods.BillingCountryOptions[19]);
+        Assert.Equal(new PaymentProxyCountryOption("US", "US - United States"), PaymentMethods.BillingCountryOptions[0]);
+        Assert.Equal(new PaymentProxyCountryOption("IE", "IE - Ireland"), PaymentMethods.BillingCountryOptions[19]);
     }
 
     [Fact]

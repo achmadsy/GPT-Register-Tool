@@ -124,15 +124,15 @@ namespace SmsWorkbench
                 configuration.ApproveCountry,
                 configuration.UpdateCountry);
             BackendCommandResult result = await _backendTasks.RunAsync(
-                BackendCommand.Create("测试协议支付代理", arguments, 120000),
+                BackendCommand.Create("Test protocol payment proxy", arguments, 120000),
                 cancellationToken: cancellationToken);
             if (result.TimedOut)
-                throw new TimeoutException("代理探测超时（120s）");
+                throw new TimeoutException("Proxy probe timed out (120s)");
             if (result.Payload.HasValue)
                 return FormatProxyResult(result.Payload.Value.GetRawText());
             if (!string.IsNullOrWhiteSpace(result.StandardError))
                 throw new InvalidOperationException(result.StandardError);
-            throw new InvalidOperationException("后端未返回代理探测结果。");
+            throw new InvalidOperationException("Backend returned no proxy probe result.");
         }
 
         public async Task<ProtocolPaymentRunResult> RunAsync(
@@ -150,7 +150,7 @@ namespace SmsWorkbench
                 if (accountEmail.Length == 0)
                 {
                     if (string.IsNullOrWhiteSpace(request.AccessToken))
-                        return new ProtocolPaymentRunResult(new ProtocolPaymentResultPresentation("请输入 Access Token", "", ""));
+                        return new ProtocolPaymentRunResult(new ProtocolPaymentResultPresentation("Enter an Access Token", "", ""));
                     transientSessionFile = Path.Combine(Path.GetTempPath(), "protocol_payment_at_" + Guid.NewGuid().ToString("N") + ".json");
                     File.WriteAllText(
                         transientSessionFile,
@@ -211,7 +211,7 @@ namespace SmsWorkbench
             catch (Exception exception)
             {
                 return new ProtocolPaymentRunResult(
-                    new ProtocolPaymentResultPresentation("[异常] " + SensitiveDataSanitizer.Redact(exception.Message), "", ""),
+                    new ProtocolPaymentResultPresentation("[Error] " + SensitiveDataSanitizer.Redact(exception.Message), "", ""),
                     SensitiveDataSanitizer.Redact(exception.Message));
             }
             finally
@@ -236,11 +236,11 @@ namespace SmsWorkbench
             ProxyTestResult result = BackendResultInterpreter.ParseProxyTestResult(raw);
             var lines = new List<string>
             {
-                result.AllOk ? "[成功] 代理出口符合选择" : "[失败] 存在不可用或地区不匹配的代理"
+                result.AllOk ? "[Success] Proxy egress matches the selection" : "[Failed] Some proxies are unusable or region-mismatched"
             };
             foreach (ProxyTestStageResult stage in result.Stages)
             {
-                string detail = $"{stage.Stage}: {stage.Ip} / {stage.ActualCountry} (目标 {stage.ExpectedCountry})";
+                string detail = $"{stage.Stage}: {stage.Ip} / {stage.ActualCountry} (target {stage.ExpectedCountry})";
                 if (stage.Error.Length > 0)
                     detail += " - " + stage.Error;
                 lines.Add(detail);

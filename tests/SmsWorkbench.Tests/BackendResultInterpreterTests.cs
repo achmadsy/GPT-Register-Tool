@@ -61,7 +61,7 @@ public sealed class BackendResultInterpreterTests
     [Fact]
     public void TryExtractScanSummary_ReadsResultsFromPromotionEnvelopePayload()
     {
-        // 查优惠 emits the same rows/total shape through the same envelope, so
+        // The promotion check emits the same rows/total shape through the same envelope, so
         // the promotion check must resolve to a summary too.
         string output = """
             @@SMSWORKBENCH_V2@@{"schema":"smsworkbench.ipc.v2","version":2,"type":"result","payload":{"ok":true,"total":2,"success":2,"failed":0,"results":[{"email":"a@example.com","promotion_status":"eligible"},{"email":"b@example.com","promotion_status":"not_eligible"}]}}
@@ -128,7 +128,7 @@ public sealed class BackendResultInterpreterTests
     [Fact]
     public void ResultRowStatus_LeadsWithThePromotionBadge()
     {
-        // Without this the panel showed "AT有效 / HTTP 200" and hid the answer.
+        // Without this the panel showed "AT valid / HTTP 200" and hid the answer.
         var row = Row(
             ("email", "a@example.com"),
             ("ok", true),
@@ -178,16 +178,16 @@ public sealed class BackendResultInterpreterTests
     public void ResultRowStatus_KeepsProbeLabellingForLiveness()
     {
         var alive = Row(("probe", Row(("ok", true), ("status_code", "200"))));
-        Assert.Equal("AT有效 / HTTP 200", BackendResultInterpreter.ResultRowStatus(alive));
+        Assert.Equal("AT valid / HTTP 200", BackendResultInterpreter.ResultRowStatus(alive));
 
         var dead = Row(("probe", Row(("status", "account_deactivated"))));
-        Assert.Equal("账号停用", BackendResultInterpreter.ResultRowStatus(dead));
+        Assert.Equal("Account deactivated", BackendResultInterpreter.ResultRowStatus(dead));
     }
 
     [Fact]
     public void ResultRowStatus_FallsBackToScanStatusWithoutProbe()
     {
-        Assert.Equal("正常", BackendResultInterpreter.ResultRowStatus(Row(("scan_status", "alive"))));
+        Assert.Equal("Normal", BackendResultInterpreter.ResultRowStatus(Row(("scan_status", "alive"))));
     }
 
     [Fact]
@@ -204,28 +204,28 @@ public sealed class BackendResultInterpreterTests
         };
         string summary = BackendResultInterpreter.PromotionSummary(rows);
 
-        Assert.Contains("总数：3", summary);
-        Assert.Contains("检测成功：2", summary);
-        Assert.Contains("AT失效：1", summary);
-        Assert.Contains("可试用Plus-50%：1", summary);
-        Assert.Contains("Free·无优惠：1", summary);
+        Assert.Contains("Total: 3", summary);
+        Assert.Contains("Probe succeeded: 2", summary);
+        Assert.Contains("AT invalid: 1", summary);
+        Assert.Contains("可试用Plus-50%: 1", summary);
+        Assert.Contains("Free·无优惠: 1", summary);
     }
 
     [Fact]
     public void PromotionSummary_HandlesEmpty()
     {
-        Assert.Contains("总数：0", BackendResultInterpreter.PromotionSummary(new List<Dictionary<string, object>>()));
+        Assert.Contains("Total: 0", BackendResultInterpreter.PromotionSummary(new List<Dictionary<string, object>>()));
     }
 
     // ── Result-dialog gate ──────────────────────────────────────────────
 
     [Theory]
-    [InlineData("账号测活(3)", true)]
-    [InlineData("账号测活", true)]
-    [InlineData("账号优惠检测(12)", true)]
-    [InlineData("账号优惠检测", true)]
-    [InlineData("批量邮箱换绑(4)", false)]
-    [InlineData("协议注册(2)", false)]
+    [InlineData("Account check (3)", true)]
+    [InlineData("Account check", true)]
+    [InlineData("Promotion check (12)", true)]
+    [InlineData("Promotion check", true)]
+    [InlineData("Batch email change (4)", false)]
+    [InlineData("Phone registration (2)", false)]
     [InlineData("", false)]
     public void IsAccountScanResultTask_CoversLivenessAndPromotion(string taskName, bool expected)
     {
@@ -233,9 +233,9 @@ public sealed class BackendResultInterpreterTests
     }
 
     [Theory]
-    [InlineData("账号测活(3)", "账号测活")]
-    [InlineData("账号优惠检测(12)", "账号优惠检测")]
-    [InlineData("协议注册(2)", "账号测活")]
+    [InlineData("Account check (3)", "Account check")]
+    [InlineData("Promotion check (12)", "Promotion check")]
+    [InlineData("Phone registration (2)", "Account check")]
     public void AccountScanResultTitle_MatchesTaskFamily(string taskName, string expected)
     {
         Assert.Equal(expected, BackendResultInterpreter.AccountScanResultTitle(taskName));
@@ -310,7 +310,7 @@ public sealed class BackendResultInterpreterTests
         {
             ["status"] = "account_deactivated"
         };
-        Assert.Equal("账号停用", BackendResultInterpreter.ProbeStatusLabel(probe));
+        Assert.Equal("Account deactivated", BackendResultInterpreter.ProbeStatusLabel(probe));
     }
 
     [Fact]
@@ -320,7 +320,7 @@ public sealed class BackendResultInterpreterTests
         {
             ["status_code"] = "401"
         };
-        Assert.Equal("AT失效 / HTTP 401", BackendResultInterpreter.ProbeStatusLabel(probe));
+        Assert.Equal("AT invalid / HTTP 401", BackendResultInterpreter.ProbeStatusLabel(probe));
     }
 
     [Fact]
@@ -331,7 +331,7 @@ public sealed class BackendResultInterpreterTests
             ["ok"] = true,
             ["status_code"] = "200"
         };
-        Assert.Equal("AT有效 / HTTP 200", BackendResultInterpreter.ProbeStatusLabel(probe));
+        Assert.Equal("AT valid / HTTP 200", BackendResultInterpreter.ProbeStatusLabel(probe));
     }
 
     [Fact]
@@ -341,7 +341,7 @@ public sealed class BackendResultInterpreterTests
         {
             ["ok"] = true
         };
-        Assert.Equal("AT有效", BackendResultInterpreter.ProbeStatusLabel(probe));
+        Assert.Equal("AT valid", BackendResultInterpreter.ProbeStatusLabel(probe));
     }
 
     [Fact]
@@ -351,7 +351,7 @@ public sealed class BackendResultInterpreterTests
         {
             ["status_code"] = "500"
         };
-        Assert.Equal("测活失败 / HTTP 500", BackendResultInterpreter.ProbeStatusLabel(probe));
+        Assert.Equal("Check failed / HTTP 500", BackendResultInterpreter.ProbeStatusLabel(probe));
     }
 
     // ── IsProbeSucceeded / IsProbeReturned401 ───────────────────────────
@@ -434,19 +434,19 @@ public sealed class BackendResultInterpreterTests
     // ── ScanStatusLabel ─────────────────────────────────────────────────
 
     [Theory]
-    [InlineData("alive", "正常")]
-    [InlineData("alive_probe_inconclusive", "RT正常 / OAuth深度探测未完成")]
-    [InlineData("account_deactivated", "账号掉号")]
-    [InlineData("secondary_phone_verification_required", "手机验证")]
-    [InlineData("phone_verification_required", "支付完成")]
-    [InlineData("scan_failed", "扫描失败")]
-    [InlineData("network_failed", "网络失败")]
-    [InlineData("mailbox_failed", "邮箱链路失败")]
-    [InlineData("auth_state_failed", "登录态失效")]
-    [InlineData("rate_limited", "触发限流")]
-    [InlineData("relogin_failed", "重登失败")]
+    [InlineData("alive", "Normal")]
+    [InlineData("alive_probe_inconclusive", "RT valid / OAuth deep probe inconclusive")]
+    [InlineData("account_deactivated", "Deactivated")]
+    [InlineData("secondary_phone_verification_required", "Phone verification")]
+    [InlineData("phone_verification_required", "Phone verified")]
+    [InlineData("scan_failed", "Scan failed")]
+    [InlineData("network_failed", "Network failed")]
+    [InlineData("mailbox_failed", "Mailbox link failed")]
+    [InlineData("auth_state_failed", "Session invalid")]
+    [InlineData("rate_limited", "Rate limited")]
+    [InlineData("relogin_failed", "Re-login failed")]
     [InlineData("unknown_status", "unknown_status")]
-    [InlineData("", "未知")]
+    [InlineData("", "Unknown")]
     public void ScanStatusLabel_ReturnsCorrectLabel(string input, string expected)
     {
         Assert.Equal(expected, BackendResultInterpreter.ScanStatusLabel(input));
@@ -503,7 +503,7 @@ public sealed class BackendResultInterpreterTests
 
         Assert.False(interpreted.IsSuccess);
         Assert.Equal("timed_out", interpreted.State);
-        Assert.Contains("超时", interpreted.DisplayText);
+        Assert.Contains("timed out", interpreted.DisplayText);
     }
 
     [Fact]
@@ -515,7 +515,7 @@ public sealed class BackendResultInterpreterTests
         Assert.False(interpreted.IsSuccess);
         Assert.Equal("failed", interpreted.State);
         Assert.Contains("something went wrong", interpreted.DisplayText);
-        Assert.Contains("参数", interpreted.DisplayText);
+        Assert.Contains("arguments", interpreted.DisplayText);
     }
 
     [Fact]
@@ -536,7 +536,7 @@ public sealed class BackendResultInterpreterTests
 
         Assert.False(interpreted.IsSuccess);
         Assert.Equal("failed", interpreted.State);
-        Assert.Contains("前置检查", interpreted.DisplayText);
+        Assert.Contains("pre-check", interpreted.DisplayText);
         Assert.Contains("no mailbox account was found", interpreted.DisplayText);
     }
 
@@ -548,7 +548,7 @@ public sealed class BackendResultInterpreterTests
 
         Assert.False(interpreted.IsSuccess);
         Assert.Equal("failed", interpreted.State);
-        Assert.Contains("运行时", interpreted.DisplayText);
+        Assert.Contains("runtime", interpreted.DisplayText);
     }
 
     [Fact]
@@ -625,17 +625,17 @@ public sealed class BackendResultInterpreterTests
     public void BatchSummaryLabelIncludesPartialTimeouts()
     {
         using var document = JsonDocument.Parse("{\"total\":20,\"success\":17,\"failed\":3,\"timed_out\":2}");
-        Assert.Equal("完成 17/20，失败 3，超时 2", BackendResultInterpreter.BatchSummaryLabel(document.RootElement));
+        Assert.Equal("Completed 17/20, failed 3, timed out 2", BackendResultInterpreter.BatchSummaryLabel(document.RootElement));
     }
 
     [Fact]
     public void BatchSummaryLabelIncludesLiveness401AndMailboxAuthFailures()
     {
         using var liveness = JsonDocument.Parse("{\"total\":5,\"success\":3,\"failed\":2,\"liveness_401\":2}");
-        Assert.Equal("完成 3/5，失败 2，401 2", BackendResultInterpreter.BatchSummaryLabel(liveness.RootElement));
+        Assert.Equal("Completed 3/5, failed 2, 401 2", BackendResultInterpreter.BatchSummaryLabel(liveness.RootElement));
 
         using var mailbox = JsonDocument.Parse("{\"total\":5,\"success\":2,\"failed\":3,\"mailbox_auth_invalid\":3}");
-        Assert.Equal("完成 2/5，失败 3，邮箱认证失败 3", BackendResultInterpreter.BatchSummaryLabel(mailbox.RootElement));
+        Assert.Equal("Completed 2/5, failed 3, mailbox auth failed 3", BackendResultInterpreter.BatchSummaryLabel(mailbox.RootElement));
     }
 
     [Fact]
@@ -644,7 +644,7 @@ public sealed class BackendResultInterpreterTests
         var cancelled = BackendResultInterpreter.Cancelled("test");
         Assert.False(cancelled.IsSuccess);
         Assert.Equal("cancelled", cancelled.State);
-        Assert.Contains("已取消", cancelled.DisplayText);
+        Assert.Contains("Cancelled", cancelled.DisplayText);
     }
 
     [Fact]

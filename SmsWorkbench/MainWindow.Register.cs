@@ -19,8 +19,8 @@ namespace SmsWorkbench
         {
             var dialog = new Microsoft.Win32.OpenFileDialog
             {
-                Filter = "文本文件 (*.txt)|*.txt|所有文件 (*.*)|*.*",
-                Title = "选择邮箱文件"
+                Filter = "Text files (*.txt)|*.txt|All files (*.*)|*.*",
+                Title = "Select mailbox file"
             };
             if (dialog.ShowDialog() != true) return;
 
@@ -32,7 +32,7 @@ namespace SmsWorkbench
             }
             catch (Exception ex)
             {
-                MessageBox.Show("读取文件失败：" + ex.Message, "错误", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show("Failed to read file: " + ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
                 return;
             }
 
@@ -40,17 +40,17 @@ namespace SmsWorkbench
             (int imported, int skipped) = MailboxPoolFileStore.ImportSupportedLines(targetFile, lines);
             ChataiMailboxFilePath = targetFile;
             RefreshPools();
-            NotifySuccess($"导入完成：成功 {imported} 条，跳过 {skipped} 条。");
+            NotifySuccess($"Import complete: {imported} imported, {skipped} skipped.");
         }
 
         private async void ViewInbox_Click(object sender, RoutedEventArgs e)
         {
-            PoolRow? row = SelectedEmailRowOrNotify("查看收件箱");
+            PoolRow? row = SelectedEmailRowOrNotify("view inbox");
             if (row == null) return;
             string mailboxLine = await FindMailboxLineForRowAsync(row).ConfigureAwait(true);
             if (string.IsNullOrWhiteSpace(mailboxLine) || BackendCommandPlanner.MailboxArgumentForLine(mailboxLine).Length == 0)
             {
-                MessageBox.Show("选中记录缺少可用的邮箱凭据或导入行。", "格式不匹配", MessageBoxButton.OK, MessageBoxImage.Information);
+                MessageBox.Show("The selected record has no usable mailbox credentials or import line.", "Format mismatch", MessageBoxButton.OK, MessageBoxImage.Information);
                 return;
             }
             ShowInboxDialog(row);
@@ -65,7 +65,7 @@ namespace SmsWorkbench
                 RegisterOptions? selectedOptions = ShowSelectedRegisterOptionsDialog(pendingSelection.Count, pending.SelectedRowCount);
                 if (selectedOptions == null) return;
                 var plan = BackendCommandPlanner.CreateMailboxFileRegistration(
-                    "选中未注册邮箱注册",
+                    "Register selected unregistered mailboxes",
                     pendingSelection.Arg,
                     pendingSelection.File,
                     pendingSelection.Count,
@@ -79,14 +79,14 @@ namespace SmsWorkbench
             }
             if (pending.PendingRowCount > 0)
             {
-                ShowThemedInfoDialog("邮箱记录不完整", "选中的未注册邮箱缺少可用邮箱原始记录，无法直接注册。");
+                ShowThemedInfoDialog("Incomplete mailbox record", "The selected unregistered mailbox has no usable raw mailbox record and cannot be registered directly.");
                 return;
             }
 
             if (SelectedRowsOrCurrent().Any(row => RegistrationStatusPresentation.IsPartial(row.RegistrationStatus)
                 || RegistrationStatusPresentation.IsPartial(row.Status)))
             {
-                ShowThemedInfoDialog("半注册", "所选邮箱已有服务端账号，不能再次新建注册。请使用已有账号恢复流程。");
+                ShowThemedInfoDialog("Partially registered", "The selected mailbox already has a server-side account and cannot be registered again. Use the existing-account recovery flow.");
                 return;
             }
 
@@ -97,7 +97,7 @@ namespace SmsWorkbench
                 RegisterOptions? selectedOptions = ShowSelectedRegisterOptionsDialog(selectedSelection.Count);
                 if (selectedOptions == null) return;
                 var plan = BackendCommandPlanner.CreateMailboxFileRegistration(
-                    "选中邮箱注册",
+                    "Register selected mailboxes",
                     selectedSelection.Arg,
                     selectedSelection.File,
                     selectedSelection.Count,
@@ -166,11 +166,11 @@ namespace SmsWorkbench
             string mailboxFile = GetChataiMailboxFilePath();
             if (string.IsNullOrWhiteSpace(mailboxFile) || !File.Exists(mailboxFile))
             {
-                ShowThemedInfoDialog("缺少邮箱文件", "未选择邮箱，且未找到 Chatai 邮箱文件。请先导入邮箱，或勾选要注册的邮箱记录。");
+                ShowThemedInfoDialog("Mailbox file missing", "No mailbox selected and no Chatai mailbox file was found. Import mailboxes first, or check mailbox rows to register.");
                 return;
             }
             var defaultPlan = BackendCommandPlanner.CreateMailboxFileRegistration(
-                "一键注册",
+                "Register accounts",
                 "--chatai-mailbox-file",
                 mailboxFile,
                 options.Count,
@@ -194,7 +194,7 @@ namespace SmsWorkbench
 
         private async Task OneClickSmsAsync(CancellationToken ct = default)
         {
-            var rows = SelectedEmailRowsOrNotify("接码");
+            var rows = SelectedEmailRowsOrNotify("SMS");
             if (rows.Count == 0) return;
 
             if (!await ShowSmsProviderOneClickDialogAsync())
@@ -206,7 +206,7 @@ namespace SmsWorkbench
                 await TryCreateMailboxFileAsync(rows, ct).ConfigureAwait(true);
             if (mailbox is null || mailbox.Count != rows.Count)
             {
-                ShowThemedInfoDialog("未选择邮箱", "一键接码需要读取邮箱验证码。请先导入并选择包含完整邮箱凭据的账号。");
+                ShowThemedInfoDialog("No mailbox selected", "SMS-code retrieval needs mailbox access. Import and select an account with complete mailbox credentials first.");
                 return;
             }
 
@@ -239,7 +239,7 @@ namespace SmsWorkbench
                 .ToList();
             if (rows.Count == 0)
             {
-                ShowThemedInfoDialog("账号测活", "没有找到可测活的账号。请先勾选账号，或切换到包含账号的筛选范围。");
+                ShowThemedInfoDialog("Account check", "No accounts found to check. Select accounts or choose a filter containing accounts.");
                 return;
             }
 
@@ -264,7 +264,7 @@ namespace SmsWorkbench
                 .ToList();
             if (rows.Count == 0)
             {
-                ShowThemedInfoDialog("账号优惠检测", "没有找到可检测的账号。请先勾选账号，或切换到包含账号的筛选范围。");
+                ShowThemedInfoDialog("Promotion check", "No accounts found to check. Select accounts or choose a filter containing accounts.");
                 return;
             }
 
@@ -280,7 +280,7 @@ namespace SmsWorkbench
         {
             var dialog = new Window
             {
-                Title = "账号测活设置",
+                Title = "Account check settings",
                 Owner = this,
                 Width = 740,
                 MinWidth = 740,
@@ -300,7 +300,7 @@ namespace SmsWorkbench
 
             var title = new TextBlock
             {
-                Text = "测活 " + Math.Max(1, accountCount).ToString() + " 个账号。HTTP 200 表示 AT 有效，HTTP 401 表示 AT 已失效；可勾选 401 自动重登。",
+                Text = "Check " + Math.Max(1, accountCount).ToString() + " account(s). HTTP 200 means the AT is valid, HTTP 401 means it has expired; enable 401 auto re-login if needed.",
                 FontSize = 14,
                 TextWrapping = TextWrapping.Wrap,
                 Foreground = (Brush)FindResource("TextSub"),
@@ -310,7 +310,7 @@ namespace SmsWorkbench
             Grid.SetColumnSpan(title, 2);
             root.Children.Add(title);
 
-            var workerLabel = new TextBlock { Text = "并发数", VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(0, 0, 10, 10), Foreground = (Brush)FindResource("TextSub") };
+            var workerLabel = new TextBlock { Text = "Workers", VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(0, 0, 10, 10), Foreground = (Brush)FindResource("TextSub") };
             Grid.SetRow(workerLabel, 1);
             Grid.SetColumn(workerLabel, 0);
             root.Children.Add(workerLabel);
@@ -321,7 +321,7 @@ namespace SmsWorkbench
 
             var autoReloginBox = new CheckBox
             {
-                Content = "401 自动重登（RT / Cookie / 邮箱 OTP / OAuth）",
+                Content = "Auto re-login on 401 (RT / Cookie / mailbox OTP / OAuth)",
                 IsChecked = false,
                 Margin = new Thickness(0, 0, 0, 10),
                 Foreground = (Brush)FindResource("TextMain")
@@ -336,8 +336,8 @@ namespace SmsWorkbench
                 HorizontalAlignment = HorizontalAlignment.Right,
                 Margin = new Thickness(0, 8, 0, 0)
             };
-            var cancel = new Button { Content = "取消", Width = 82, Margin = new Thickness(0, 0, 10, 0), Style = (Style)FindResource("SecondaryButton") };
-            var ok = new Button { Content = "开始测活", Width = 98, Style = (Style)FindResource("PrimaryButton") };
+            var cancel = new Button { Content = "Cancel", Width = 82, Margin = new Thickness(0, 0, 10, 0), Style = (Style)FindResource("SecondaryButton") };
+            var ok = new Button { Content = "Start check", Width = 98, Style = (Style)FindResource("PrimaryButton") };
             actions.Children.Add(cancel);
             actions.Children.Add(ok);
             Grid.SetRow(actions, 2);
@@ -377,7 +377,7 @@ namespace SmsWorkbench
         {
             var dialog = new Window
             {
-                Title = "选中邮箱注册",
+                Title = "Register selected mailboxes",
                 Owner = this,
                 Width = 560,
                 Height = 278,
@@ -404,8 +404,8 @@ namespace SmsWorkbench
             // "I checked N but the report says N-k" confusion measured on
             // 2026-09-19 (docs/audits/scan-2026-09-19-selected-22-vs-reported-3of6.md).
             string hintText = checkedCount > usable
-                ? $"已选择 {usable} 个可注册邮箱（勾选 {checkedCount} 个，本地排除 {checkedCount - usable} 个已注册/半注册/记录不完整；后端还会剔除冷却/隔离/死路地址）"
-                : "已选择 " + usable.ToString() + " 个邮箱";
+                ? $"{usable} usable mailbox(es) selected ({checkedCount} checked; {checkedCount - usable} excluded locally as registered/partial/incomplete; the backend also drops cooling/quarantined/dead-end addresses)"
+                : usable.ToString() + " mailbox(es) selected";
             var hint = new TextBlock
             {
                 Text = hintText,
@@ -417,7 +417,7 @@ namespace SmsWorkbench
             Grid.SetColumnSpan(hint, 2);
             root.Children.Add(hint);
 
-            var workerLabel = new TextBlock { Text = "并发", VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(0, 0, 10, 10), Foreground = (System.Windows.Media.Brush)FindResource("TextSub") };
+            var workerLabel = new TextBlock { Text = "Workers", VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(0, 0, 10, 10), Foreground = (System.Windows.Media.Brush)FindResource("TextSub") };
             var workerBox = new TextBox { Text = DefaultWorkerCount().ToString(), Margin = new Thickness(0, 0, 0, 10) };
             Grid.SetRow(workerLabel, 1);
             Grid.SetColumn(workerLabel, 0);
@@ -428,7 +428,7 @@ namespace SmsWorkbench
 
             var no2faBox = new CheckBox
             {
-                Content = "关闭 2FA（不注册 TOTP）",
+                Content = "Disable 2FA (do not enroll TOTP)",
                 IsChecked = true,
                 Margin = new Thickness(0, 0, 0, 10),
                 Foreground = (System.Windows.Media.Brush)FindResource("TextMain")
@@ -439,7 +439,7 @@ namespace SmsWorkbench
 
             var promotionBox = new CheckBox
             {
-                Content = "注册完成后查询试用优惠",
+                Content = "Check trial promotion after registration",
                 IsChecked = true,
                 Margin = new Thickness(0, 0, 0, 10),
                 Foreground = (System.Windows.Media.Brush)FindResource("TextMain")
@@ -449,8 +449,8 @@ namespace SmsWorkbench
             root.Children.Add(promotionBox);
 
             var actions = new StackPanel { Orientation = Orientation.Horizontal, HorizontalAlignment = HorizontalAlignment.Right, Margin = new Thickness(0, 10, 0, 0) };
-            var ok = new Button { Content = "开始", Width = 72, Style = (Style)FindResource("PrimaryButton") };
-            var cancel = new Button { Content = "取消", Width = 72 };
+            var ok = new Button { Content = "Start", Width = 72, Style = (Style)FindResource("PrimaryButton") };
+            var cancel = new Button { Content = "Cancel", Width = 72 };
             actions.Children.Add(ok);
             actions.Children.Add(cancel);
             Grid.SetRow(actions, 4);
@@ -488,7 +488,7 @@ namespace SmsWorkbench
         {
             var dialog = new Window
             {
-                Title = "一键注册",
+                Title = "Register accounts",
                 Owner = this,
                 Width = 560,
                 Height = 332,
@@ -508,13 +508,13 @@ namespace SmsWorkbench
             root.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(110) });
             root.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
 
-            var sourceLabel = new TextBlock { Text = "注册方式", VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(0, 0, 10, 10), Foreground = (System.Windows.Media.Brush)FindResource("TextSub") };
+            var sourceLabel = new TextBlock { Text = "Registration source", VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(0, 0, 10, 10), Foreground = (System.Windows.Media.Brush)FindResource("TextSub") };
             var sourceBox = new ComboBox { Margin = new Thickness(0, 0, 0, 10) };
-            sourceBox.Items.Add(new ComboBoxItem { Content = "ReMail 邮箱", Tag = "remail_target" });
-            sourceBox.Items.Add(new ComboBoxItem { Content = "Smailr 邮箱", Tag = "smailr" });
-            sourceBox.Items.Add(new ComboBoxItem { Content = "Outlook/Hotmail/iCloud 邮箱池", Tag = "pool" });
-            sourceBox.Items.Add(new ComboBoxItem { Content = "CF Worker 域名邮箱", Tag = "cfworker" });
-            sourceBox.Items.Add(new ComboBoxItem { Content = "手机号注册", Tag = "phone" });
+            sourceBox.Items.Add(new ComboBoxItem { Content = "ReMail mailbox", Tag = "remail_target" });
+            sourceBox.Items.Add(new ComboBoxItem { Content = "Smailr mailbox", Tag = "smailr" });
+            sourceBox.Items.Add(new ComboBoxItem { Content = "Outlook/Hotmail/iCloud pool", Tag = "pool" });
+            sourceBox.Items.Add(new ComboBoxItem { Content = "CF Worker domain mailbox", Tag = "cfworker" });
+            sourceBox.Items.Add(new ComboBoxItem { Content = "Phone registration", Tag = "phone" });
             sourceBox.SelectedIndex = 0;
             Grid.SetRow(sourceLabel, 0);
             Grid.SetColumn(sourceLabel, 0);
@@ -523,7 +523,7 @@ namespace SmsWorkbench
             root.Children.Add(sourceLabel);
             root.Children.Add(sourceBox);
 
-            var countLabel = new TextBlock { Text = "数量", VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(0, 0, 10, 10), Foreground = (System.Windows.Media.Brush)FindResource("TextSub") };
+            var countLabel = new TextBlock { Text = "Count", VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(0, 0, 10, 10), Foreground = (System.Windows.Media.Brush)FindResource("TextSub") };
             var countBox = new TextBox { Text = CountValue().ToString(), Margin = new Thickness(0, 0, 0, 10) };
             Grid.SetRow(countLabel, 1);
             Grid.SetColumn(countLabel, 0);
@@ -532,7 +532,7 @@ namespace SmsWorkbench
             root.Children.Add(countLabel);
             root.Children.Add(countBox);
 
-            var workerLabel = new TextBlock { Text = "并发", VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(0, 0, 10, 10), Foreground = (System.Windows.Media.Brush)FindResource("TextSub") };
+            var workerLabel = new TextBlock { Text = "Workers", VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(0, 0, 10, 10), Foreground = (System.Windows.Media.Brush)FindResource("TextSub") };
             var workerBox = new TextBox { Text = DefaultWorkerCount().ToString(), Margin = new Thickness(0, 0, 0, 10) };
             Grid.SetRow(workerLabel, 2);
             Grid.SetColumn(workerLabel, 0);
@@ -543,7 +543,7 @@ namespace SmsWorkbench
 
             var no2faBox = new CheckBox
             {
-                Content = "关闭 2FA（不注册 TOTP）",
+                Content = "Disable 2FA (do not enroll TOTP)",
                 IsChecked = true,
                 Margin = new Thickness(0, 0, 0, 10),
                 Foreground = (System.Windows.Media.Brush)FindResource("TextMain")
@@ -554,7 +554,7 @@ namespace SmsWorkbench
 
             var promotionBox = new CheckBox
             {
-                Content = "注册完成后查询试用优惠",
+                Content = "Check trial promotion after registration",
                 IsChecked = true,
                 Margin = new Thickness(0, 0, 0, 10),
                 Foreground = (System.Windows.Media.Brush)FindResource("TextMain")
@@ -566,14 +566,14 @@ namespace SmsWorkbench
             void UpdateTargetControls()
             {
                 bool targetMode = string.Equals((sourceBox.SelectedItem as ComboBoxItem)?.Tag as string, "remail_target", StringComparison.OrdinalIgnoreCase);
-                countLabel.Text = targetMode ? "注册数量" : "数量";
+                countLabel.Text = targetMode ? "Registration count" : "Count";
             }
             sourceBox.SelectionChanged += (_, __) => UpdateTargetControls();
             UpdateTargetControls();
 
             var actions = new StackPanel { Orientation = Orientation.Horizontal, HorizontalAlignment = HorizontalAlignment.Right, Margin = new Thickness(0, 10, 0, 0) };
-            var ok = new Button { Content = "开始", Width = 72, Style = (Style)FindResource("PrimaryButton") };
-            var cancel = new Button { Content = "取消", Width = 72 };
+            var ok = new Button { Content = "Start", Width = 72, Style = (Style)FindResource("PrimaryButton") };
+            var cancel = new Button { Content = "Cancel", Width = 72 };
             actions.Children.Add(ok);
             actions.Children.Add(cancel);
             Grid.SetRow(actions, 5);
@@ -690,9 +690,12 @@ namespace SmsWorkbench
         private bool HasRegisteredAccountState(PoolRow row)
         {
             string status = row.Status ?? "";
-            return status.Contains("已注册")
+            return status.Contains("Registered")
+                || status.Contains("已注册")
                 || status.Contains("PayPal")
+                || status.Contains("Payment completed")
                 || status.Contains("支付完成")
+                || status.Contains("Imported")
                 || status.Contains("已导入");
         }
 
@@ -761,7 +764,7 @@ namespace SmsWorkbench
             }
             catch (Exception ex)
             {
-                Log("读取邮箱 backend 失败：" + SensitiveDataSanitizer.Redact(ex.Message));
+                Log("Mailbox backend read failed: " + SensitiveDataSanitizer.Redact(ex.Message));
             }
             return "";
         }

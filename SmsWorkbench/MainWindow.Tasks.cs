@@ -39,7 +39,7 @@ namespace SmsWorkbench
                 BackendCommandResult result = await backendClient.RunAsync(command).ConfigureAwait(true);
                 if (!result.Payload.HasValue)
                 {
-                    Log("[doctor] 环境自检未返回结构化结果(退出码 " + result.ExitCode + ")");
+                    Log("[doctor] Environment check returned no structured result (exit code " + result.ExitCode + ")");
                     return;
                 }
                 var fails = new List<string>();
@@ -59,28 +59,28 @@ namespace SmsWorkbench
                 }
                 if (fails.Count == 0)
                 {
-                    Log($"[doctor] 环境自检通过{(warned > 0 ? $"({warned} 项警告,详见设置与代理配置)" : "")}");
+                    Log($"[doctor] Environment check passed{(warned > 0 ? $" ({warned} warnings; see Settings and proxy configuration)" : "")}");
                     return;
                 }
                 var detail = string.Join("\n  - ", fails);
-                Log("[doctor] 环境自检发现 " + fails.Count + " 项缺失依赖");
+                Log("[doctor] Environment check found " + fails.Count + " missing dependencies");
                 MessageBox.Show(
                     this,
-                    $"环境自检发现 {fails.Count} 项必需依赖缺失:\n  - {detail}\n\n" +
-                    "可先运行: python -m pip install -r requirements.txt -c constraints.txt\n" +
-                    "或使用命令 python chatgpt_phone_reg.py --doctor 查看完整报告。",
-                    "环境自检",
+                    $"Environment check found {fails.Count} required dependencies missing:\n  - {detail}\n\n" +
+                    "Run: python -m pip install -r requirements.txt -c constraints.txt\n" +
+                    "Or run python chatgpt_phone_reg.py --doctor for the full report.",
+                    "Environment Check",
                     MessageBoxButton.OK,
                     MessageBoxImage.Warning);
             }
             catch (Exception ex)
             {
-                Log("[doctor] 环境自检失败: " + ex.Message);
+                Log("[doctor] Environment check failed: " + ex.Message);
                 MessageBox.Show(
                     this,
-                    SensitiveDataSanitizer.Redact(ex.Message) + "\n\n桌面端依赖 Python 3.10+ 与 requirements.txt/constraints.txt 中的依赖包。" +
-                    "\n安装后在 设置 → 数据与文件 → 运行环境 配置解释器路径,再重启本程序。",
-                    "无法启动 Python 后端",
+                    SensitiveDataSanitizer.Redact(ex.Message) + "\n\nThe desktop app requires Python 3.10+ and packages from requirements.txt/constraints.txt." +
+                    "\nAfter installation, configure the interpreter under Settings → Data & Files → Runtime, then restart the app.",
+                    "Could not start Python backend",
                     MessageBoxButton.OK,
                     MessageBoxImage.Error);
             }
@@ -119,12 +119,12 @@ namespace SmsWorkbench
         {
             if (backendTasks.IsRunning)
             {
-                MessageBox.Show("已有批次正在运行，请先取消或等待完成。", "运行中", MessageBoxButton.OK, MessageBoxImage.Information);
+                MessageBox.Show("A batch is already running. Cancel it or wait for it to finish.", "Running", MessageBoxButton.OK, MessageBoxImage.Information);
                 return;
             }
 
             string safeArgs = FormatBackendArgsForDisplay(args);
-            var task = new TaskRow { Name = "批次 " + taskSeq++, Task = taskName, Status = "运行中", Info = safeArgs };
+            var task = new TaskRow { Name = "Batch " + taskSeq++, Task = taskName, Status = "Running", Info = safeArgs };
             Tasks.Add(task);
             ScrollTaskGridToBottom();
             DateTime started = DateTime.Now;
@@ -202,9 +202,9 @@ namespace SmsWorkbench
             });
             try
             {
-                logger?.Information("启动后端任务 task={TaskName} command_id={CommandId} args={Args}", taskName, commandId, safeArgs);
+                logger?.Information("Starting backend task={TaskName} command_id={CommandId} args={Args}", taskName, commandId, safeArgs);
                 Log(BackendLogPresenter.TaskStartLine(taskName));
-                StatusText = taskName + " 运行中";
+                StatusText = taskName + " running";
                 BackendCommandResult result = await backendTasks.RunAsync(
                     BackendCommand.Create(
                         taskName,
@@ -226,20 +226,20 @@ namespace SmsWorkbench
                 // A killed Python process may not emit its terminal envelope.
                 // Recover the rows already persisted by the liveness workers so
                 // the operator still gets a useful partial result dialog.
-                if (result.TimedOut && taskName.StartsWith("账号测活", StringComparison.OrdinalIgnoreCase))
+                if (result.TimedOut && taskName.StartsWith("Account check", StringComparison.OrdinalIgnoreCase))
                 {
                     string snapshot = TryReadLatestLivenessSnapshot();
                     if (snapshot.Length > 0)
                         CaptureBackendLine(snapshot);
                 }
 
-                task.Status = interpreted.IsSuccess ? "完成" : "失败";
+                task.Status = interpreted.IsSuccess ? "Completed" : "Failed";
                 string batchSummary = BackendResultInterpreter.BatchSummaryLabel(interpreted.Payload);
                 if (batchSummary.Length > 0)
                     task.Info = batchSummary;
                 task.Cost = ((int)(DateTime.Now - started).TotalSeconds).ToString(CultureInfo.InvariantCulture);
                 task.DoneAt = SafeTime(DateTime.Now);
-                StatusText = taskName + " 已结束";
+                StatusText = taskName + " finished";
                 RefreshPools();
                 ScrollTaskGridToBottom();
                 if (BackendResultInterpreter.IsAccountScanResultTask(taskName))
@@ -254,21 +254,21 @@ namespace SmsWorkbench
             }
             catch (OperationCanceledException)
             {
-                task.Status = "已取消";
+                task.Status = "Cancelled";
                 task.DoneAt = SafeTime(DateTime.Now);
-                StatusText = taskName + " 已取消";
+                StatusText = taskName + " cancelled";
             }
             catch (BackendTaskAlreadyRunningException)
             {
-                task.Status = "未启动";
+                task.Status = "Not started";
                 task.DoneAt = SafeTime(DateTime.Now);
-                StatusText = taskName + " 未启动";
-                MessageBox.Show("已有批次正在运行，请先取消或等待完成。", "运行中", MessageBoxButton.OK, MessageBoxImage.Information);
+                StatusText = taskName + " not started";
+                MessageBox.Show("A batch is already running. Cancel it or wait for it to finish.", "Running", MessageBoxButton.OK, MessageBoxImage.Information);
             }
             catch (Exception ex)
             {
-                task.Status = "启动失败";
-                Log("启动失败：" + ex.Message);
+                task.Status = "Start failed";
+                Log("Start failed: " + ex.Message);
             }
             finally
             {
@@ -310,7 +310,7 @@ namespace SmsWorkbench
         private async Task<string> RunBackendWithResultAsync(string taskName, List<string> args, int timeoutMs = 120000, CancellationToken ct = default)
         {
             string commandId = Guid.NewGuid().ToString("N");
-            logger?.Information("启动后端任务 task={TaskName} command_id={CommandId} args={Args}", taskName, commandId, FormatBackendArgsForDisplay(args));
+            logger?.Information("Starting backend task={TaskName} command_id={CommandId} args={Args}", taskName, commandId, FormatBackendArgsForDisplay(args));
             Log(BackendLogPresenter.TaskStartLine(taskName));
             var logFolder = new BackendLogFolder();
             var progress = new Progress<BackendOutputLine>(line =>
@@ -344,7 +344,7 @@ namespace SmsWorkbench
         private void LogBackendProgress(string taskName, BackendProgressEvent progressEvent)
         {
             logger?.Information(
-                "后端进度 task={TaskName} command_id={CommandId} account_ref={AccountRef} stage={Stage} status={Status} failure_class={FailureClass} detail={Detail}",
+                "Backend progress task={TaskName} command_id={CommandId} account_ref={AccountRef} stage={Stage} status={Status} failure_class={FailureClass} detail={Detail}",
                 taskName,
                 progressEvent.CommandId,
                 progressEvent.AccountRef,
@@ -413,7 +413,7 @@ namespace SmsWorkbench
 
         private async Task DeleteSelectedAsync(CancellationToken ct = default)
         {
-            var selected = SelectedEmailRowsOrNotify("删除");
+            var selected = SelectedEmailRowsOrNotify("delete");
             if (selected.Count == 0) return;
             if (!await ShowDeleteConfirmDialog(selected.Count)) return;
             BackendCommandPlan? plan = null;
@@ -429,14 +429,14 @@ namespace SmsWorkbench
                 {
                     await DialogFactory.ShowInfoAsync(
                         this,
-                        "删除未完成",
-                        failed + " 条记录未能完整删除。请查看运行日志。");
+                        "Delete incomplete",
+                        failed + " record(s) could not be fully deleted. Check the run log.");
                 }
             }
             catch (Exception ex)
             {
-                Log("批量删除失败：" + SensitiveDataSanitizer.Redact(ex.Message));
-                await DialogFactory.ShowInfoAsync(this, "删除失败", "批量删除未完成，请查看运行日志。");
+                Log("Batch delete failed: " + SensitiveDataSanitizer.Redact(ex.Message));
+                await DialogFactory.ShowInfoAsync(this, "Delete failed", "Batch delete incomplete. Check the run log.");
             }
             finally
             {
@@ -465,9 +465,9 @@ namespace SmsWorkbench
         {
             return await DialogFactory.ShowConfirmAsync(
                 this,
-                "删除选中的 " + count + " 条记录？",
-                "将同步清理本地邮箱池、SQLite 索引和匹配的 session 文件。此操作不可撤销。",
-                "删除",
+                "Delete selected " + count + " record(s)?",
+                "This also removes matching local mailbox-pool rows, SQLite records, and session files. This cannot be undone.",
+                "Delete",
                 isDanger: true);
         }
 
@@ -481,7 +481,7 @@ namespace SmsWorkbench
             }
             catch (Exception ex)
             {
-                Log("删除文件失败：" + SensitiveDataSanitizer.Redact(path) + " " + SensitiveDataSanitizer.Redact(ex.Message));
+                Log("File deletion failed: " + SensitiveDataSanitizer.Redact(path) + " " + SensitiveDataSanitizer.Redact(ex.Message));
                 return false;
             }
         }
@@ -490,17 +490,17 @@ namespace SmsWorkbench
         {
             if (!backendTasks.IsRunning)
             {
-                Log("当前没有运行中的批次。");
+                Log("No batch is currently running.");
                 return;
             }
             try
             {
                 if (backendTasks.Cancel())
-                    Log("已取消当前批次。");
+                    Log("Current batch cancelled.");
             }
             catch (Exception ex)
             {
-                Log("取消失败：" + ex.Message);
+                Log("Cancel failed: " + ex.Message);
             }
         }
 

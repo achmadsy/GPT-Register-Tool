@@ -73,6 +73,15 @@ jobs:
       - run: python scripts/docs_consistency_scan.py
       - shell: powershell
         run: powershell -ExecutionPolicy Bypass -File .\SmsWorkbench\build_dotnet.ps1
+      - name: Package Python backend beside desktop executable
+        shell: powershell
+        run: |
+          Copy-Item .\chatgpt_phone_reg.py .\dist\net10\chatgpt_phone_reg.py -Force
+          Copy-Item .\requirements.txt .\dist\net10\requirements.txt -Force
+          Copy-Item .\constraints.txt .\dist\net10\constraints.txt -Force
+          Copy-Item .\config.example.json .\dist\net10\config.example.json -Force
+          Copy-Item .\sms_tool .\dist\net10\sms_tool -Recurse -Force
+          Copy-Item .\services .\dist\net10\services -Recurse -Force
       - name: Verify publish artifact contains no runtime secrets
         shell: powershell
         run: |
