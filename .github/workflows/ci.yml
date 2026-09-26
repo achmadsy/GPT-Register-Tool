@@ -80,6 +80,8 @@ jobs:
           Copy-Item .\requirements.txt .\dist\net10\requirements.txt -Force
           Copy-Item .\constraints.txt .\dist\net10\constraints.txt -Force
           Copy-Item .\config.example.json .\dist\net10\config.example.json -Force
+          Copy-Item .\sensitive_policy.json .\dist\net10\sensitive_policy.json -Force
+          Copy-Item .\payment_methods.json .\dist\net10\payment_methods.json -Force
           Copy-Item .\sms_tool .\dist\net10\sms_tool -Recurse -Force
           Copy-Item .\services .\dist\net10\services -Recurse -Force
       - name: Verify publish artifact contains no runtime secrets
