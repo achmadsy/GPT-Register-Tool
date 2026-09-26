@@ -312,11 +312,11 @@ def run_batch(
             ),
             reverse=True,
         )
-        log("batch", f"促销矩阵: {len(combos)} 个组合 (PayPal 区 × promotion 区), 0元+BA 成功即停")
+        log("batch", f"Promotion matrix: {len(combos)} combination(s) (PayPal region x promotion region), stopping at first zero-due+BA success")
         matrix: list[dict[str, Any]] = []
         for index, (pp_region, promo_region) in enumerate(combos, 1):
             label = f"{pp_region}<-promo:{promo_region}"
-            log("batch", f"任务 {index}/{len(combos)}: paypal={pp_region} promotion={promo_region}")
+            log("batch", f"Task {index}/{len(combos)}: paypal={pp_region} promotion={promo_region}")
             region_proxy = proxy_for_country_template(proxy_template, pp_region)
             promotion_proxy = proxy_for_country_template(proxy_template, promo_region)
             row: dict[str, Any] = {
@@ -360,16 +360,16 @@ def run_batch(
                 if result.get("ok") and is_zero and is_ba:
                     row["status"] = "success"
                     matrix.append(row)
-                    log("batch", f"任务 {label} 成功! 0元+BA url={str(result.get('url'))[:80]}...")
+                    log("batch", f"Task {label} success! zero-due+BA url={str(result.get('url'))[:80]}...")
                     return {"ok": True, "tasks_attempted": index, "tasks_total": len(combos),
                             "winning_combo": label, "matrix": matrix, **result}
                 row["status"] = "partial" if result.get("ok") else "failed"
-                log("batch", f"任务 {label}: amount={row['amount']} link_type={row['link_type']} (未同时满足 0元+BA)")
+                log("batch", f"Task {label}: amount={row['amount']} link_type={row['link_type']} (zero-due+BA not both met)")
             except Exception as e:
                 row["error"] = str(e)
-                log("batch", f"任务 {label} 失败: {e}")
+                log("batch", f"Task {label} failed: {e}")
             matrix.append(row)
-        return {"ok": False, "error": f"所有 {len(combos)} 个促销矩阵组合均未同时满足 0元+BA",
+        return {"ok": False, "error": f"All {len(combos)} promotion-matrix combination(s) failed to meet zero-due+BA",
                 "tasks_attempted": len(combos), "matrix": matrix}
 
     # ── 默认模式: target × checkout ─────────────────────────────────────────
@@ -387,11 +387,11 @@ def run_batch(
         ),
         reverse=True,
     )
-    log("batch", f"批量任务: {len(tasks)} 个组合, 提取到第一个 BA 链后停止")
+    log("batch", f"Batch: {len(tasks)} combination(s), stopping at the first extracted BA link")
 
     for index, (target, checkout) in enumerate(tasks, 1):
         task_label = f"{target}-{checkout}"
-        log("batch", f"任务 {index}/{len(tasks)}: target={target} checkout_proxy={checkout}")
+        log("batch", f"Task {index}/{len(tasks)}: target={target} checkout_proxy={checkout}")
 
         checkout_proxy = proxy_for_country_template(proxy_template, checkout)
         target_proxy = proxy_for_country_template(proxy_template, target)
@@ -430,42 +430,42 @@ def run_batch(
                 },
             )
             result = extractor.extract()
-            log("batch", f"任务 {task_label} 成功! url={result['url'][:80]}...")
+            log("batch", f"Task {task_label} success! url={result['url'][:80]}...")
             return {"ok": True, "tasks_attempted": index, "tasks_total": len(tasks), "winning_combo": task_label, **result}
         except Exception as e:
-            log("batch", f"任务 {task_label} 失败: {e}")
+            log("batch", f"Task {task_label} failed: {e}")
             continue
 
-    return {"ok": False, "error": f"所有 {len(tasks)} 个组合均失败", "tasks_attempted": len(tasks)}
+    return {"ok": False, "error": f"All {len(tasks)} combination(s) failed", "tasks_attempted": len(tasks)}
 
 
 
 def main():
     import argparse
 
-    parser = argparse.ArgumentParser(description="PP 直链生成器 -- 分段代理池版")
+    parser = argparse.ArgumentParser(description="PP direct-link generator -- staged proxy pool edition")
     parser.add_argument("token", nargs="?", help="OpenAI Access Token")
     parser.add_argument("--token", dest="token_flag", help="Access Token (alternative)")
-    parser.add_argument("--proxy", default="", help="单代理模式 (所有阶段)")
-    parser.add_argument("--checkout-proxy", default="", help="Checkout 阶段代理 (JP)")
-    parser.add_argument("--provider-proxy", default="", help="Provider/Stripe 阶段代理 (目标国)")
-    parser.add_argument("--approve-proxy", default="", help="Approve 阶段代理 (目标国)")
-    parser.add_argument("--promotion-proxy", default="", help="促销更新阶段代理 (促销可用区出口, 如 VN/TH; 用于 /checkout/update 打 0元)")
-    parser.add_argument("--promotion-country", default="", help="批量模式促销更新出口国家 (如 VN/TH)")
-    parser.add_argument("--promotion-countries", default="", help="促销矩阵模式: promotion 出口国列表 (逗号分隔, 如 JP,TH,VN)。设置后 run_batch 走 PayPal区×promotion区 组合搜索")
-    parser.add_argument("--proxy-template", default="", help="代理模板 (自动替换国家码)")
-    parser.add_argument("--target", default="DE", help="目标国家 (单次模式)")
-    parser.add_argument("--checkout-country", default="", help="Checkout 阶段账单国家 (默认同 target, 如 JP/TR)")
-    parser.add_argument("--batch", action="store_true", help="批量矩阵模式")
-    parser.add_argument("--target-countries", default="", help="批量模式目标国家 (逗号分隔)")
-    parser.add_argument("--checkout-countries", default="JP,TH", help="批量模式 checkout 出口 (逗号分隔)")
-    parser.add_argument("--no-require-zero", action="store_true", help="不要求 0 元金额")
-    parser.add_argument("--json", action="store_true", help="JSON 输出")
+    parser.add_argument("--proxy", default="", help="Single proxy mode (all stages)")
+    parser.add_argument("--checkout-proxy", default="", help="Checkout stage proxy (JP)")
+    parser.add_argument("--provider-proxy", default="", help="Provider/Stripe stage proxy (target country)")
+    parser.add_argument("--approve-proxy", default="", help="Approve stage proxy (target country)")
+    parser.add_argument("--promotion-proxy", default="", help="Promotion update stage proxy (promotion-region exit, e.g. VN/TH; used for /checkout/update zero-due)")
+    parser.add_argument("--promotion-country", default="", help="Batch mode promotion update exit country (e.g. VN/TH)")
+    parser.add_argument("--promotion-countries", default="", help="Promotion matrix mode: comma-separated promotion exit countries (e.g. JP,TH,VN); run_batch searches PayPal-region x promotion-region combinations")
+    parser.add_argument("--proxy-template", default="", help="Proxy template (country code auto-substituted)")
+    parser.add_argument("--target", default="DE", help="Target country (single-run mode)")
+    parser.add_argument("--checkout-country", default="", help="Checkout stage billing country (defaults to target, e.g. JP/TR)")
+    parser.add_argument("--batch", action="store_true", help="Batch matrix mode")
+    parser.add_argument("--target-countries", default="", help="Batch mode target countries (comma-separated)")
+    parser.add_argument("--checkout-countries", default="JP,TH", help="Batch mode checkout exits (comma-separated)")
+    parser.add_argument("--no-require-zero", action="store_true", help="Do not require a zero-due amount")
+    parser.add_argument("--json", action="store_true", help="JSON output")
 
     args = parser.parse_args()
     token = args.token or args.token_flag
     if not token:
-        parser.error("请提供 Access Token")
+        parser.error("Access Token is required")
 
     emit = _emit
 
@@ -475,7 +475,7 @@ def main():
         # 批量模式
         template = args.proxy_template or args.proxy
         if not template:
-            parser.error("批量模式需要 --proxy-template")
+            parser.error("Batch mode requires --proxy-template")
         targets = [c.strip().upper() for c in args.target_countries.split(",") if c.strip()] if args.target_countries else list(DEFAULT_TARGET_COUNTRIES)
         checkouts = [c.strip().upper() for c in args.checkout_countries.split(",") if c.strip()]
         promotion_countries = [c.strip().upper() for c in args.promotion_countries.split(",") if c.strip()]
@@ -489,7 +489,7 @@ def main():
         approve_proxy = args.approve_proxy or args.proxy
         promotion_proxy = args.promotion_proxy or ""
         if not checkout_proxy and not provider_proxy:
-            parser.error("请提供代理 (--proxy 或 --checkout-proxy + --provider-proxy)")
+            parser.error("Proxy is required (--proxy, or --checkout-proxy + --provider-proxy)")
         extractor = _plm.PPLinkExtractor(
             access_token=token,
             checkout_proxy=checkout_proxy,
@@ -507,16 +507,16 @@ def main():
         print(json.dumps(result, ensure_ascii=False, indent=2))
     else:
         if result.get("ok"):
-            print(f"\n✅ PP 直链提取成功!")
+            print(f"\n[+] PP direct link extracted!")
             print(f"   URL: {sanitize_text(result['url'])}")
             if result.get("ba_token"):
                 print("   BA Token: [REDACTED]")
             print(f"   cs_id: {result['cs_id']}")
-            print(f"   金额: {result.get('amount')} {result.get('currency')}")
-            print(f"   目标国: {result.get('target_country')}")
-            print(f"   链接类型: {result.get('link_type')}")
+            print(f"   Amount: {result.get('amount')} {result.get('currency')}")
+            print(f"   Target country: {result.get('target_country')}")
+            print(f"   Link type: {result.get('link_type')}")
         else:
-            print(f"\n❌ 提取失败: {result.get('error')}")
+            print(f"\n[x] Extraction failed: {result.get('error')}")
             sys.exit(1)
 
 

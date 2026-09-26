@@ -114,7 +114,7 @@ def test_wall_clock_budget_stops_the_walk(monkeypatch, capsys):
         )
 
     assert 0 < len(probed) < len(pool)
-    assert "注册预检超时" in capsys.readouterr().out
+    assert "Registration preflight timeout" in capsys.readouterr().out
 
 
 def test_progress_is_reported_for_every_probe(monkeypatch, capsys):
@@ -129,9 +129,9 @@ def test_progress_is_reported_for_every_probe(monkeypatch, capsys):
     _run(pool, probe, _config(), monkeypatch)
 
     out = capsys.readouterr().out
-    assert "注册预检" in out
-    assert "1/2 dead.example:8080 失败" in out
-    assert "2/2 live.example:8080 可用" in out
+    assert "Registration preflight" in out
+    assert "1/2 dead.example:8080 failed" in out
+    assert "2/2 live.example:8080 OK" in out
 
 
 def test_all_candidates_are_checked_and_only_openai_healthy_routes_survive(monkeypatch):

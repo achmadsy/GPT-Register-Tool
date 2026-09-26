@@ -249,7 +249,7 @@ class ConfigureLoggingTests(unittest.TestCase):
             machine = Path(by_suffix[".jsonl"].baseFilename).read_text(encoding="utf-8", errors="replace")
         except OSError:  # pragma: no cover - environment cannot host the file
             self.skipTest("log files are not readable in this environment")
-        self.assertIn("阶段 · 创建账号 (create_account) — 进行中", human)
+        self.assertIn("Stage · Create account (create_account) — running", human)
         self.assertNotIn("schema_version", human)
         self.assertIn('"schema_version": 1', machine)
 
@@ -368,7 +368,7 @@ class ConfigureLoggingTests(unittest.TestCase):
             human = Path(by_suffix[".log"].baseFilename).read_text(encoding="utf-8", errors="replace")
         except OSError:  # pragma: no cover - environment cannot host the file
             self.skipTest("log files are not readable in this environment")
-        self.assertIn("[!] [告警] UserWarning: captured-warning-marker", human)
+        self.assertIn("[!] [Warning] UserWarning: captured-warning-marker", human)
         self.assertNotIn("test_logging_setup.py:", human)
 
 

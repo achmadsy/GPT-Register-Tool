@@ -272,21 +272,21 @@ def test_label_falls_back_to_the_ungrouped_lists():
 
 def test_composition_never_leaves_a_dangling_separator():
     assert promotion_status_with_eligibility("可试用Plus-100%", "card/upi/momo") == "可试用Plus-100% · card/upi/momo"
-    assert promotion_status_with_eligibility("Free·无优惠", "") == "Free·无优惠"
+    assert promotion_status_with_eligibility("Free·No promotion", "") == "Free·No promotion"
     assert promotion_status_with_eligibility("", "card") == "card"
     assert promotion_status_with_eligibility("", "") == ""
 
 
 def test_composition_shows_the_unknown_marker_next_to_the_promotion_label():
     assert (
-        promotion_status_with_eligibility("Free·无优惠", PAYMENT_ELIGIBILITY_UNKNOWN_LABEL)
-        == "Free·无优惠 · 支付资格未知"
+        promotion_status_with_eligibility("Free·No promotion", PAYMENT_ELIGIBILITY_UNKNOWN_LABEL)
+        == "Free·No promotion · Payment eligibility unknown"
     )
     assert (
-        promotion_status_with_eligibility("可试用Plus-100%", PAYMENT_ELIGIBILITY_UNKNOWN_LABEL)
-        == "可试用Plus-100% · 支付资格未知"
+        promotion_status_with_eligibility("Trial Plus·-100%·×1month", PAYMENT_ELIGIBILITY_UNKNOWN_LABEL)
+        == "Trial Plus·-100%·×1month · Payment eligibility unknown"
     )
-    assert promotion_status_with_eligibility("", PAYMENT_ELIGIBILITY_UNKNOWN_LABEL) == "支付资格未知"
+    assert promotion_status_with_eligibility("", PAYMENT_ELIGIBILITY_UNKNOWN_LABEL) == "Payment eligibility unknown"
 
 
 # --------------------------------------------------------------------------
@@ -317,7 +317,7 @@ def test_mark_promotion_status_persists_and_survives_a_relogin_write(tmp_path):
 
     assert mark_promotion_status(
         "cap@example.test",
-        "Free·无优惠",
+        "Free·No promotion",
         payment_capability={"ok": True, "methods": ["card", "upi"]},
         runtime_config=config,
     )
@@ -327,7 +327,7 @@ def test_mark_promotion_status_persists_and_survives_a_relogin_write(tmp_path):
     assert stored["payment_capability"]["methods"] == ["card", "upi"]
     assert stored["payment_capability"]["updated_at"] > 0
     # The promotion label stays pure; the badge is composed at display time.
-    assert stored["promotion_status"] == "Free·无优惠"
+    assert stored["promotion_status"] == "Free·No promotion"
 
     # Relogin / account-health write: the payload is rebuilt from the stored
     # raw_json and re-serialized through safe_snapshot()'s whitelist.
@@ -351,7 +351,7 @@ def test_empty_payment_capability_clears_a_stale_answer(tmp_path):
     assert upsert_account({"email": "stale@example.test", "success": True, "access_token": "at"}, runtime_config=config)
     assert mark_promotion_status(
         "stale@example.test",
-        "Free·无优惠",
+        "Free·No promotion",
         payment_capability={"ok": True, "methods": ["card"]},
         runtime_config=config,
     )
@@ -373,12 +373,12 @@ def test_none_leaves_a_previously_stored_answer_alone(tmp_path):
     assert upsert_account({"email": "keep@example.test", "success": True, "access_token": "at"}, runtime_config=config)
     assert mark_promotion_status(
         "keep@example.test",
-        "Free·无优惠",
+        "Free·No promotion",
         payment_capability={"ok": True, "methods": ["card"]},
         runtime_config=config,
     )
 
-    assert mark_promotion_status("keep@example.test", "Free·无优惠", runtime_config=config)
+    assert mark_promotion_status("keep@example.test", "Free·No promotion", runtime_config=config)
 
     stored = json.loads(get_account_record("keep@example.test", runtime_config=config)["raw_json"])
     assert stored["payment_capability"]["methods"] == ["card"]
@@ -389,7 +389,7 @@ def test_credential_keys_are_never_persisted_into_the_capability_blob(tmp_path):
     assert upsert_account({"email": "scrub@example.test", "success": True, "access_token": "at"}, runtime_config=config)
     assert mark_promotion_status(
         "scrub@example.test",
-        "Free·无优惠",
+        "Free·No promotion",
         payment_capability={
             "ok": True,
             "methods": ["card"],
@@ -438,14 +438,14 @@ def test_desktop_read_leaves_promotion_display_alone_without_eligibility(tmp_pat
     assert upsert_account({"email": "plain@example.test", "success": True, "access_token": "at"}, runtime_config=config)
     assert mark_promotion_status(
         "plain@example.test",
-        "Free·无优惠",
+        "Free·No promotion",
         promotion_state="free",
         runtime_config=config,
     )
 
     payload = read_account(email="plain@example.test", runtime_config=config)
 
-    assert payload["promotion_display"] == "Free·无优惠"
+    assert payload["promotion_display"] == "Free·No promotion"
     assert "payment_eligibility" not in payload
 
 
@@ -463,7 +463,7 @@ def test_desktop_read_marks_a_failed_probe_instead_of_leaving_it_blank(tmp_path)
     assert upsert_account({"email": "blocked@example.test", "success": True, "access_token": "at"}, runtime_config=config)
     assert mark_promotion_status(
         "blocked@example.test",
-        "Free·无优惠",
+        "Free·No promotion",
         promotion_state="free",
         payment_capability={
             "ok": False,
@@ -479,9 +479,9 @@ def test_desktop_read_marks_a_failed_probe_instead_of_leaving_it_blank(tmp_path)
 
     payload = read_account(email="blocked@example.test", runtime_config=config)
 
-    assert payload["promotion_status"] == "Free·无优惠"
+    assert payload["promotion_status"] == "Free·No promotion"
     assert payload["payment_eligibility"] == PAYMENT_ELIGIBILITY_UNKNOWN_LABEL
-    assert payload["promotion_display"] == "Free·无优惠 · 支付资格未知"
+    assert payload["promotion_display"] == "Free·No promotion · Payment eligibility unknown"
 
 
 def test_desktop_read_does_not_mark_an_account_the_probe_never_reached(tmp_path):
@@ -497,14 +497,14 @@ def test_desktop_read_does_not_mark_an_account_the_probe_never_reached(tmp_path)
     assert upsert_account({"email": "untouched@example.test", "success": True, "access_token": "at"}, runtime_config=config)
     assert mark_promotion_status(
         "untouched@example.test",
-        "Free·无优惠",
+        "Free·No promotion",
         promotion_state="free",
         runtime_config=config,
     )
 
     payload = read_account(email="untouched@example.test", runtime_config=config)
 
-    assert payload["promotion_display"] == "Free·无优惠"
+    assert payload["promotion_display"] == "Free·No promotion"
     assert "payment_eligibility" not in payload
 
 

@@ -353,9 +353,9 @@ class PaymentLinkManagerTests(unittest.TestCase):
             args=[],
             returncode=0,
             stdout=(
-                "BLIK 自动提交完成\n"
+                "BLIK auto-submit completed\n"
                 'BLIK_RESULT:{"ok": true, "payment_method": "blik", "status": "completed", '
-                '"link_type": "blik_protocol_completed", "message": "BLIK 自动提交完成"}\n'
+                '"link_type": "blik_protocol_completed", "message": "BLIK auto-submit completed"}\n'
             ),
             stderr="",
         )

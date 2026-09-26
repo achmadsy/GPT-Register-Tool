@@ -175,7 +175,7 @@ async def _do_pay(
         if el:
             await el.click()
             create_clicked = True
-            print("[nd-pay] Clicked 创建账户")
+            print("[nd-pay] Clicked Create Account (CN)")
     except Exception:
         pass
 

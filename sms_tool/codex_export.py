@@ -68,7 +68,7 @@ def export_codex_session(
             "ok": False,
             "email": target_email,
             "error": "missing_refresh_token_for_cpa",
-            "message": "CPA导入必须先拿到 OpenAI OAuth refresh token，当前账号已跳过无RT导出。",
+            "message": "CPA import requires an OpenAI OAuth refresh token first; accounts without RT are skipped.",
             "refresh": refresh_result,
             "refresh_token_status": "no_rt",
             "warnings": warnings,

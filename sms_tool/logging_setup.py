@@ -85,65 +85,65 @@ _LEVEL_MARKERS = {
 # Logger name -> operator-facing module label. Matched by dotted prefix, most
 # specific first (the tuple is pre-sorted by length below).
 _MODULE_LABELS = {
-    "sms_tool.registration_progress": "注册",
-    "sms_tool.registration_handlers": "注册",
-    "sms_tool.registration_retry_guard": "注册",
-    "sms_tool.registration_drivers": "浏览器注册",
-    "sms_tool.registration": "注册",
-    "sms_tool.batch_runner": "批量注册",
-    "sms_tool.commands.one_click": "一键接码",
-    "sms_tool.commands.registration": "注册",
-    "sms_tool.commands.accounts": "账号",
-    "sms_tool.accounts.account_liveness": "账号测活",
-    "sms_tool.accounts.account_health_queue": "账号测活",
-    "sms_tool.accounts.account_scan": "账号测活",
-    "sms_tool.accounts.account_recovery": "账号测活",
-    "sms_tool.accounts.account_promotion": "优惠检测",
-    "sms_tool.codex_oauth": "Codex 授权",
-    "sms_tool.mailbox": "邮箱",
-    "sms_tool.providers": "邮箱",
-    "sms_tool.phone": "接码",
-    "proxy_bridge": "代理桥接",
-    "sms_tool.proxy": "代理",
+    "sms_tool.registration_progress": "Registration",
+    "sms_tool.registration_handlers": "Registration",
+    "sms_tool.registration_retry_guard": "Registration",
+    "sms_tool.registration_drivers": "Browser registration",
+    "sms_tool.registration": "Registration",
+    "sms_tool.batch_runner": "Batch registration",
+    "sms_tool.commands.one_click": "One-click SMS",
+    "sms_tool.commands.registration": "Registration",
+    "sms_tool.commands.accounts": "Accounts",
+    "sms_tool.accounts.account_liveness": "Liveness check",
+    "sms_tool.accounts.account_health_queue": "Liveness check",
+    "sms_tool.accounts.account_scan": "Liveness check",
+    "sms_tool.accounts.account_recovery": "Liveness check",
+    "sms_tool.accounts.account_promotion": "Promotion check",
+    "sms_tool.codex_oauth": "Codex OAuth",
+    "sms_tool.mailbox": "Mailbox",
+    "sms_tool.providers": "Mailbox",
+    "sms_tool.phone": "SMS",
+    "proxy_bridge": "Proxy bridge",
+    "sms_tool.proxy": "Proxy",
     "sms_tool.http_client": "HTTP",
     # Routed by logging.captureWarnings(): Python ``warnings`` output becomes
     # one formatted log line instead of raw multi-line stderr noise (which the
     # WPF panel renders without any formatter).
-    "py.warnings": "告警",
+    "py.warnings": "Warning",
 }
 _MODULE_LABELS_SORTED = tuple(
     sorted(_MODULE_LABELS.items(), key=lambda item: -len(item[0]))
 )
 
 _STAGE_LABELS = {
-    "created": "已创建",
-    "mailbox_ready": "邮箱就绪",
-    "sentinel": "Sentinel 令牌",
-    "identity_ready": "身份信息就绪",
-    "auth_flow": "授权流程",
-    "user_register": "提交注册",
-    "email_otp_send": "发送邮箱验证码",
-    "email_otp_resend": "重发邮箱验证码",
-    "email_otp_wait": "等待邮箱验证码",
-    "email_otp_validate": "校验邮箱验证码",
-    "create_account": "创建账号",
-    "auth_session": "建立会话",
-    "codex_oauth": "Codex 授权",
-    "access_token_probe": "访问令牌探测",
-    "access_token_stability_wait": "令牌稳定性等待",
-    "totp_enroll": "绑定 TOTP",
-    "finalize": "收尾",
-    "completed": "完成",
-    "failed": "失败",
-    "started": "开始",
+    "created": "Created",
+    "mailbox_ready": "Mailbox ready",
+    "sentinel": "Sentinel token",
+    "identity_ready": "Identity ready",
+    "auth_flow": "Auth flow",
+    "user_register": "Submit registration",
+    "email_otp_send": "Send email OTP",
+    "email_otp_resend": "Resend email OTP",
+    "email_otp_wait": "Wait for email OTP",
+    "email_otp_validate": "Validate email OTP",
+    "create_account": "Create account",
+    "auth_session": "Establish session",
+    "codex_oauth": "Codex OAuth",
+    "access_token_probe": "Access token probe",
+    "access_token_stability_wait": "Token stability wait",
+    "totp_enroll": "Enroll TOTP",
+    "finalize": "Finalize",
+    "completed": "Completed",
+    "failed": "Failed",
+    "started": "Started",
 }
-_STAGE_SUFFIX_LABELS = (("_retry", "重试"), ("_reload", "重新加载"))
+_STAGE_SUFFIX_LABELS = (("_retry", "retry"), ("_reload", "reload"))
 _STATUS_LABELS = {
-    "running": "进行中",
-    "success": "成功",
-    "failed": "失败",
-    "cancelled": "已取消",
-    "retry_pending": "待重试",
+    "running": "running",
+    "success": "success",
+    "failed": "failed",
+    "cancelled": "cancelled",
+    "retry_pending": "retry pending",
 }
 _STAGE_LINE = re.compile(r"^Registration stage=(\S+) status=(\S+)")
 # warnings -> py.warnings message shape: ``<file>:<lineno>: <Category>: <text>
@@ -153,7 +153,7 @@ _WARNING_LINE = re.compile(r"^[^\n]*\.py:\d+:\s*(\w+):\s*(.*)$", re.S)
 
 
 def module_label(logger_name: str) -> str:
-    """Operator-facing Chinese label for a dotted logger name."""
+    """Operator-facing label for a dotted logger name."""
     name = str(logger_name or "")
     for prefix, label in _MODULE_LABELS_SORTED:
         if name == prefix or name.startswith(prefix + "."):
@@ -162,23 +162,23 @@ def module_label(logger_name: str) -> str:
 
 
 def stage_display(stage: str, status: str) -> str:
-    """Render one stage record as ``阶段 · 中文名 (code) — 状态``."""
+    """Render one stage record as ``Stage · label (code) — status``."""
     code = str(stage or "unknown")
     label = _STAGE_LABELS.get(code)
     if label is None:
         for suffix, suffix_label in _STAGE_SUFFIX_LABELS:
             base = code[: -len(suffix)] if code.endswith(suffix) else ""
             if base and base in _STAGE_LABELS:
-                label = f"{_STAGE_LABELS[base]}（{suffix_label}）"
+                label = f"{_STAGE_LABELS[base]} ({suffix_label})"
                 break
-    status_label = _STATUS_LABELS.get(str(status or ""), str(status or "进行中"))
+    status_label = _STATUS_LABELS.get(str(status or ""), str(status or "running"))
     if label is None:
-        return f"阶段 · {code} — {status_label}"
-    return f"阶段 · {label} ({code}) — {status_label}"
+        return f"Stage · {code} — {status_label}"
+    return f"Stage · {label} ({code}) — {status_label}"
 
 
 class HumanLogFormatter(logging.Formatter):
-    """Operator log line: ``HH:MM:SS [*] [模块] 消息``, stage-aware, sanitized."""
+    """Operator log line: ``HH:MM:SS [*] [module] message``, stage-aware, sanitized."""
 
     def format(self, record: logging.LogRecord) -> str:
         from .sanitizer import sanitize_log_text

@@ -102,7 +102,7 @@ def _browser_access_token_probe(browser: Any, account: Mapping[str, Any], *, tim
         "ok": False,
         "mode": "browser",
         "status": "unknown",
-        "quota_status": "检测失败",
+        "quota_status": "Check failed",
         "status_code": 0,
         # Playwright failures arrive as a bare ``Error`` type name; the real
         # cause (timeout, closed context, navigation interrupted) only exists

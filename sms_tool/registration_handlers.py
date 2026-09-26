@@ -1322,7 +1322,7 @@ class RegistrationEmailWorkflow:
         )
         emit_event({
             "domain": "registration", "operation": "registration", "stage": "registration_status_changed",
-            "status": "running", "detail": "半注册", "registration_status": "partial_registered",
+            "status": "running", "detail": "Partially registered", "registration_status": "partial_registered",
             "account_ref": account_reference(s.username), "run_id": current_run_id.get(),
         })
 

@@ -21,39 +21,39 @@ def _record(message, *, name="sms_tool.registration_progress", level=logging.INF
 
 
 class StageDisplayTests(unittest.TestCase):
-    def test_known_stage_renders_chinese_label_and_status(self):
+    def test_known_stage_renders_label_and_status(self):
         self.assertEqual(
             stage_display("email_otp_send", "running"),
-            "阶段 · 发送邮箱验证码 (email_otp_send) — 进行中",
+            "Stage · Send email OTP (email_otp_send) — running",
         )
-        self.assertEqual(stage_display("completed", "success"), "阶段 · 完成 (completed) — 成功")
+        self.assertEqual(stage_display("completed", "success"), "Stage · Completed (completed) — success")
 
     def test_retry_suffix_renders_against_the_base_stage(self):
         self.assertEqual(
             stage_display("auth_flow_retry", "running"),
-            "阶段 · 授权流程（重试） (auth_flow_retry) — 进行中",
+            "Stage · Auth flow (retry) (auth_flow_retry) — running",
         )
 
     def test_unknown_stage_falls_back_to_the_raw_code(self):
-        self.assertEqual(stage_display("some_future_stage", "failed"), "阶段 · some_future_stage — 失败")
+        self.assertEqual(stage_display("some_future_stage", "failed"), "Stage · some_future_stage — failed")
 
 
 class ModuleLabelTests(unittest.TestCase):
     def test_known_loggers_map_to_module_labels(self):
-        self.assertEqual(module_label("sms_tool.registration_progress"), "注册")
+        self.assertEqual(module_label("sms_tool.registration_progress"), "Registration")
         self.assertEqual(
             module_label("sms_tool.registration_drivers.browser_flow.orchestrator"),
-            "浏览器注册",
+            "Browser registration",
         )
-        self.assertEqual(module_label("proxy_bridge"), "代理桥接")
-        self.assertEqual(module_label("sms_tool.commands.one_click"), "一键接码")
-        self.assertEqual(module_label("sms_tool.accounts.account_liveness"), "账号测活")
-        self.assertEqual(module_label("sms_tool.accounts.account_promotion"), "优惠检测")
-        self.assertEqual(module_label("py.warnings"), "告警")
+        self.assertEqual(module_label("proxy_bridge"), "Proxy bridge")
+        self.assertEqual(module_label("sms_tool.commands.one_click"), "One-click SMS")
+        self.assertEqual(module_label("sms_tool.accounts.account_liveness"), "Liveness check")
+        self.assertEqual(module_label("sms_tool.accounts.account_promotion"), "Promotion check")
+        self.assertEqual(module_label("py.warnings"), "Warning")
 
     def test_most_specific_prefix_wins(self):
-        self.assertEqual(module_label("sms_tool.registration"), "注册")
-        self.assertEqual(module_label("sms_tool.registration_retry_guard"), "注册")
+        self.assertEqual(module_label("sms_tool.registration"), "Registration")
+        self.assertEqual(module_label("sms_tool.registration_retry_guard"), "Registration")
 
     def test_unknown_logger_uses_the_last_dotted_segment(self):
         self.assertEqual(module_label("third_party.noisy"), "noisy")
@@ -66,7 +66,7 @@ class HumanLogFormatterTests(unittest.TestCase):
         )
         self.assertRegex(
             line,
-            r"^\d{2}:\d{2}:\d{2} \[\*\] \[注册\] 阶段 · 提交注册 \(user_register\) — 进行中$",
+            r"^\d{2}:\d{2}:\d{2} \[\*\] \[Registration\] Stage · Submit registration \(user_register\) — running$",
         )
         self.assertNotIn("run_id", line)
         self.assertNotIn("schema_version", line)
@@ -82,7 +82,7 @@ class HumanLogFormatterTests(unittest.TestCase):
             _record("upstream http://user:pass@proxy.test:8000", name="proxy_bridge")
         )
         self.assertNotIn("user:pass", line)
-        self.assertIn("[代理桥接]", line)
+        self.assertIn("[Proxy bridge]", line)
 
     def test_account_email_is_masked_in_persisted_log_text(self):
         line = HumanLogFormatter().format(
@@ -103,8 +103,8 @@ class HumanLogFormatterTests(unittest.TestCase):
         record.account_ref = "77011ced116a1194"
         self.assertRegex(
             HumanLogFormatter().format(record),
-            r"^\d{2}:\d{2}:\d{2} \[\*\] \[注册\] 阶段 · 提交注册 \(user_register\)"
-            r" — 进行中 · account_ref=77011ced116a1194$",
+            r"^\d{2}:\d{2}:\d{2} \[\*\] \[Registration\] Stage · Submit registration \(user_register\)"
+            r" — running · account_ref=77011ced116a1194$",
         )
 
     def test_records_without_an_account_ref_keep_the_plain_shape(self):
@@ -142,7 +142,7 @@ class HumanLogFormatterTests(unittest.TestCase):
         line = HumanLogFormatter().format(_record(message, name="py.warnings", level=logging.WARNING))
         self.assertRegex(
             line,
-            r"^\d{2}:\d{2}:\d{2} \[!\] \[告警\] LeakWarning: When using a proxy.*geoip=True`\.$",
+            r"^\d{2}:\d{2}:\d{2} \[!\] \[Warning\] LeakWarning: When using a proxy.*geoip=True`\.$",
         )
         self.assertNotIn("managed.py:339", line)
         self.assertNotIn("__enter__", line)

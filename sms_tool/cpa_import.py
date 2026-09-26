@@ -278,7 +278,7 @@ def refresh_cpa_quota_statuses(emails=None, workers=4, api_url="", api_token="",
 
     def _run(index, email, item):
         probe = probe_cpa_codex_quota(item, api_url=api_url, api_token=api_token, timeout=timeout)
-        status = str(probe.get("quota_status") or probe.get("status") or "未知")
+        status = str(probe.get("quota_status") or probe.get("status") or "Unknown")
         persisted = mark_quota_status(email, status, quota_result=probe)
         return index, {
             "ok": bool(probe.get("ok")) and bool(persisted),
@@ -295,7 +295,7 @@ def refresh_cpa_quota_statuses(emails=None, workers=4, api_url="", api_token="",
             ordered[index] = result
     results = [item for item in ordered if item is not None]
     for email in missing_emails:
-        status = "未导入CPA"
+        status = "Not imported to CPA"
         persisted = mark_quota_status(
             email,
             status,
@@ -418,7 +418,7 @@ def _build_cpa_payload(token_data):
     refresh_token = str(token_data.get("refresh_token") or "").strip()
     id_token = str(token_data.get("id_token") or "").strip()
     if not access_token:
-        return {"ok": False, "error": "missing_access_token", "message": "CPA导入缺少 access_token。"}
+        return {"ok": False, "error": "missing_access_token", "message": "CPA import is missing access_token."}
 
     payload = {
         "type": "codex",
@@ -592,7 +592,7 @@ def _load_cpa_source(email="", session_file="", export_dir=""):
     return {
         "ok": False,
         "error": "missing_at_json",
-        "message": "CPA导入需要已有 access_token 的 JSON 文件；当前账号未找到可导入的 AT JSON。",
+        "message": "CPA import requires a JSON file that already has an access_token; no importable AT JSON found for this account.",
         "path": json_path or session_file or "",
     }
 

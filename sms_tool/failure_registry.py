@@ -294,6 +294,7 @@ FAILURE_CLASSES: tuple[FailureClass, ...] = (
         "submission_attempt_failed",
         "stripe submission failed",
         "checkout_approval_payment_failure",
+        "stripe risk decline",
         "stripe 风控拒绝",
         # 🔴 ``upi_redirect_timeout`` 必须在这里显式登记。它自己只含裸词
         # "timeout"，会被 ``network`` 的 GENERIC_TRANSPORT_MARKERS 机制
@@ -332,18 +333,18 @@ TERMINAL_ERROR_MARKERS: tuple[str, ...] = (
 
 # 操作者建议：code 出现在错误文本中即命中（registration_policy 消费）。
 ADVICE: dict[str, str] = {
-    "manual_challenge_required": "需要人工验证，已停止自动重试。",
-    "browser_proxy_blocked": "目标拒绝了当前连接，停止重试并检查服务访问政策。",
-    "browser_email_field_missing": "未找到邮箱框，请检查页面结构和登录状态。",
-    "browser_email_field_not_editable": "邮箱框尚不可编辑，请检查页面加载或人工验证状态。",
-    "browser_registration_state_unknown": "页面状态未知，请保留脱敏诊断并人工检查。",
-    "browser_email_verification_stuck": "邮箱验证后的页面未跳转，请检查验证状态，勿重复创建账号。",
-    "browser_unexpected_identity_provider": "跳转到了意外身份提供方，已停止自动化。",
-    "mailbox_auth_invalid": "邮箱凭据已隔离，请修复邮箱池后再试。",
-    "mailbox_endpoint_unavailable": "邮箱端点不可用，暂停五分钟后可重新检查。",
-    "remail_api_auth_invalid": "邮箱服务认证失败，请检查服务配置。",
-    "registration_retry_cooldown": "该邮箱处于冷却期，请等待后重试。",
-    "stage_budget_exceeded": "阶段超过预算，请检查耗时和阻塞点。",
+    "manual_challenge_required": "Human verification required; automatic retries stopped.",
+    "browser_proxy_blocked": "Target rejected connection; check proxy and service access policy.",
+    "browser_email_field_missing": "Email input field not found; inspect page structure and login state.",
+    "browser_email_field_not_editable": "Email field is not editable; check page load or challenge status.",
+    "browser_registration_state_unknown": "Registration page state unknown; inspect sanitized diagnostics.",
+    "browser_email_verification_stuck": "Page did not advance after email verification; check status before retrying.",
+    "browser_unexpected_identity_provider": "Redirected to unexpected identity provider; automation halted.",
+    "mailbox_auth_invalid": "Mailbox credential isolated; repair mailbox pool before retrying.",
+    "mailbox_endpoint_unavailable": "Mailbox endpoint unavailable; paused 5 minutes before re-checking.",
+    "remail_api_auth_invalid": "Mailbox service authentication failed; check configuration.",
+    "registration_retry_cooldown": "Mailbox is in cooldown; wait before retrying.",
+    "stage_budget_exceeded": "Stage budget exceeded; check latency and blocking points.",
 }
 
 # OTP 投递被 IP 级封禁的签名（registration_pulse 消费，决定换池重排）。

@@ -732,10 +732,10 @@ def _recover_remail_service_token(mailbox, proxy=None):
     status = str(order.get("status") or "").strip().lower()
     receive_until = str(order.get("receiveUntil") or "").strip()
     if mode == "code" and (not current_token or status in {"completed", "closed", "refunded", "failed"}):
-        deadline = f"（收件截止 {receive_until}）" if receive_until else ""
+        deadline = f" (receiving until {receive_until})" if receive_until else ""
         raise RuntimeError(
-            f"ReMail 短效接码订单已失效{deadline}。API Key 只能查询订单，不能代替 Service Token "
-            "读取过期收件箱；请新建订单，需要长期查看请使用 purchase 模式。"
+            f"ReMail short-lived OTP order expired{deadline}. The API Key can only query orders and cannot "
+            "replace the Service Token for reading an expired inbox; create a new order, or use purchase mode for long-term access."
         )
     raise RuntimeError(
         "ReMail Service Token is invalid or expired, and the order API did not return a replacement token."

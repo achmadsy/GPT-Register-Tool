@@ -570,7 +570,7 @@ class PPLinkExtractor:
             return False
         if r.status_code >= 400:
             self._record_stage_result("promotion", self.promotion_proxy, False, f"HTTP {r.status_code}")
-            self._log("promotion", f"checkout/update 失败 {r.status_code}: {r.text[:200]} (忽略, 由 require_zero 兜底)")
+            self._log("promotion", f"checkout/update failed {r.status_code}: {r.text[:200]} (ignored, require_zero handles fallback)")
             return False
         try:
             payload = r.json() or {}
@@ -581,7 +581,7 @@ class PPLinkExtractor:
             self._log("promotion", f"checkout/update 被拒: {json.dumps(payload, ensure_ascii=False)[:200]}")
             return False
         self._record_stage_result("promotion", self.promotion_proxy, True)
-        self._log("promotion", "checkout/update 成功: 促销已应用到当前 checkout")
+        self._log("promotion", "checkout/update OK: promotion applied to current checkout")
         return True
 
     def _checkout_update_taxes(self, cs_id: str, processor_entity: str) -> bool:
@@ -623,9 +623,9 @@ class PPLinkExtractor:
             self._log("promotion", f"checkout/taxes 请求异常 (忽略): {e}")
             return False
         if r.status_code >= 400:
-            self._log("promotion", f"checkout/taxes 失败 {r.status_code}: {r.text[:200]} (忽略)")
+            self._log("promotion", f"checkout/taxes failed {r.status_code}: {r.text[:200]} (ignored)")
             return False
-        self._log("promotion", "checkout/taxes 同步成功")
+        self._log("promotion", "checkout/taxes sync OK")
         return True
 
     # ─── Stage 2: Stripe init + create PM + confirm (目标国代理) ───────────
@@ -671,7 +671,7 @@ class PPLinkExtractor:
 
     def _create_payment_method(self, cs_id: str) -> str:
         self._active_stage = "payment_method"
-        self._log("payment_method", f"创建 PayPal payment_method")
+        self._log("payment_method", f"Creating PayPal payment_method")
         stripe = self._set_stripe_proxy(self.payment_method_proxy)
         billing = billing_for_country(self.target_country)
         body = {
@@ -847,11 +847,11 @@ class PPLinkExtractor:
             raise CheckoutApprovalBlockedError(endpoint, r)
         if result != "approved":
             raise PayPalHttpError("approve", endpoint, r, retryable=False)
-        self._log("approve", "ChatGPT approve 成功")
+        self._log("approve", "ChatGPT approve OK")
 
     def _poll_payment_page(self, cs_id: str, timeout_seconds: float = 45) -> str:
         """轮询 Stripe payment page 获取 redirect URL。"""
-        self._log("poll", f"轮询 payment page (超时 {timeout_seconds}s)")
+        self._log("poll", f"Polling payment page (timeout {timeout_seconds}s)")
         stripe = getattr(self, "_stripe_session", None) or _new_session(self.provider_proxy)
         deadline = time.time() + timeout_seconds
         params = {
@@ -887,9 +887,9 @@ class PPLinkExtractor:
                     if state == "failed":
                         raise Exception(f"submission failed: {submission}")
             if poll_count % 5 == 0:
-                self._log("poll", f"第 {poll_count} 次轮询...")
+                self._log("poll", f"Poll attempt {poll_count}...")
             time.sleep(1)
-        raise Exception(f"轮询超时 ({timeout_seconds}s)")
+        raise Exception(f"Polling timed out ({timeout_seconds}s)")
 
     def _run_provider_stages(self, cs_id: str) -> tuple[dict, str, dict]:
         base_proxies = {
@@ -1070,7 +1070,7 @@ class PPLinkExtractor:
         # Standard flow: confirm is followed by exactly one approval submission.
         # A redirect returned by confirm is only a hint; approval remains the
         # authoritative ChatGPT checkout transition.
-        self._log("approve", "confirm 完成，提交 ChatGPT checkout approval")
+        self._log("approve", "confirm done; submitting ChatGPT checkout approval")
         try:
             redirect_url = self._approve_and_poll(cs_id, processor_entity)
         except PaymentOutcomeUnknownError:

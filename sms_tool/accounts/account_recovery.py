@@ -35,7 +35,7 @@ from ..storage import (
 )
 from ..mailbox_quarantine import mailbox_relogin_allowed
 from ..promotion_states import (
-    AUTH_INVALID_LABEL,
+    AUTH_INVALID_LEGACY_LABELS,
     PROMOTION_STATE_AUTH_INVALID,
 )
 from ..providers.mailbox_graph import MailboxAuthInvalidError
@@ -635,7 +635,7 @@ def _promotion_auth_failure(data: Any) -> bool:
     if code:
         return code == "401"
     label = str(data.get("promotion_status") or "").strip() or str(promotion.get("status") or "").strip()
-    return label == AUTH_INVALID_LABEL
+    return label in AUTH_INVALID_LEGACY_LABELS
 
 
 def _mark_successful_relogin(data: dict[str, Any], probe: dict[str, Any], *, now: int | None = None) -> None:

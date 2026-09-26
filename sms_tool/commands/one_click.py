@@ -121,7 +121,7 @@ def one_click_sms(args: Any, ctx: OneClickCommandContext) -> None:
         batch_id=batch_id,
         stage="batch_started",
         total=len(emails),
-        detail="一键接码开始",
+        detail="One-click SMS started",
     )
     print(f"[*] One-click SMS RT refresh: {len(emails)} account(s), workers={workers}")
     logger.info("one-click SMS RT refresh started: accounts=%d workers=%d", len(emails), workers)
@@ -134,7 +134,7 @@ def one_click_sms(args: Any, ctx: OneClickCommandContext) -> None:
             batch_id=batch_id,
             stage="session_load",
             email=email,
-            detail="读取账号会话",
+            detail="Loading account session",
         )
         data, json_path = _load_seed_session(
             email=email,
@@ -149,7 +149,7 @@ def one_click_sms(args: Any, ctx: OneClickCommandContext) -> None:
             batch_id=batch_id,
             stage="oauth_refresh",
             email=email,
-            detail="执行 OAuth 与邮箱验证码流程",
+            detail="Running OAuth and email OTP flow",
         )
         result = refresh_codex_oauth_session(
             data,
@@ -170,7 +170,7 @@ def one_click_sms(args: Any, ctx: OneClickCommandContext) -> None:
                 stage="completed",
                 status="success",
                 email=email,
-                detail="RT 已保存",
+                detail="Refresh token saved",
                 account_terminal=True,
             )
         else:
@@ -183,7 +183,7 @@ def one_click_sms(args: Any, ctx: OneClickCommandContext) -> None:
                 stage="failed",
                 status="failed",
                 email=email,
-                detail=str(result.get("error") or "一键接码失败")[:160],
+                detail=str(result.get("error") or "One-click SMS failed")[:160],
                 account_terminal=True,
                 failure_class=str(result.get("failure_class") or "unknown"),
             )
@@ -217,7 +217,7 @@ def one_click_sms(args: Any, ctx: OneClickCommandContext) -> None:
         batch_id=batch_id,
         stage="batch_completed",
         status="completed" if ok_count == len(emails) else "failed",
-        detail=f"完成 {ok_count}/{len(emails)}",
+        detail=f"Completed {ok_count}/{len(emails)}",
         total=len(emails),
         batch_terminal=True,
     )

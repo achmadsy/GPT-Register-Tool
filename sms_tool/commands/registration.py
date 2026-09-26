@@ -125,7 +125,9 @@ def preflight_registration_before_mailbox(args: Any, ctx: RegistrationCommandCon
     skipped_hosts: dict[str, int] = {}
     successful_routes: list[tuple[str, dict]] = []
 
-    safe_print(f"[*] 注册预检：{total} 个候选路由（单候选上限 {per_host_limit} 次、总预算 {budget_seconds:.0f}s）")
+    safe_print(
+        f"[*] Registration preflight: {total} candidate route(s) (per-route limit {per_host_limit} attempt(s), total budget {budget_seconds:.0f}s)"
+    )
 
     # 并发探测（2026-09-18）：串行时启动开销与候选数成正比 —— 实测 10 个候选
     # 124s，而 ``select_registration_proxy_pool`` 早就在用
@@ -164,8 +166,8 @@ def preflight_registration_before_mailbox(args: Any, ctx: RegistrationCommandCon
                 elapsed_total = time.time() - started
                 if elapsed_total > budget_seconds:
                     safe_print(
-                        f"[!] 注册预检超时：已用 {elapsed_total:.0f}s / 预算 {budget_seconds:.0f}s，"
-                        f"放弃剩余候选（已试 {attempted}/{total}）"
+                        f"[!] Registration preflight timeout: {elapsed_total:.0f}s used / budget {budget_seconds:.0f}s, "
+                        f"giving up remaining candidates (tried {attempted}/{total})"
                     )
                     timed_out = True
                     break
@@ -198,12 +200,12 @@ def preflight_registration_before_mailbox(args: Any, ctx: RegistrationCommandCon
                     last_error = exc
                     batch_failures[label] = batch_failures.get(label, 0) + 1
                     safe_print(
-                        f"[!] 注册预检 {index}/{total} {label} 失败 "
-                        f"({elapsed:.1f}s)：{sanitize_log_text(exc)[:160]}"
+                        f"[!] Registration preflight {index}/{total} {label} failed "
+                        f"({elapsed:.1f}s): {sanitize_log_text(exc)[:160]}"
                     )
                     continue
                 batch_ok_hosts.add(label)
-                safe_print(f"[*] 注册预检 {index}/{total} {label} 可用（{elapsed:.1f}s）")
+                safe_print(f"[*] Registration preflight {index}/{total} {label} OK ({elapsed:.1f}s)")
                 probes[index] = (str(result.get("proxy") or candidate or "").strip(), result)
             # 主机计数按**整批**结算，不按完成序 —— 否则「成功清零 / 失败累加」
             # 的先后会让同一个出口的计数随线程调度随机化。
@@ -220,14 +222,14 @@ def preflight_registration_before_mailbox(args: Any, ctx: RegistrationCommandCon
 
     if skipped_hosts:
         summary = ", ".join(f"{host}×{count}" for host, count in sorted(skipped_hosts.items()))
-        safe_print(f"[!] 注册预检：以下出口主机连续失败已达上限，剩余候选已跳过：{summary}")
+        safe_print(f"[!] Registration preflight: these exit hosts hit the consecutive failure limit; remaining candidates skipped: {summary}")
     if successful_routes:
         healthy = list(dict.fromkeys(route for route, _result in successful_routes if route))
         args.proxy_pool = "\n".join(healthy)
         args.proxy = healthy[0] if healthy else None
         safe_print(
-            f"[*] 注册预检完成：{len(successful_routes)}/{attempted} 条实测可用，"
-            "批次只使用通过 OpenAI 边界检查的路由"
+            f"[*] Registration preflight done: {len(successful_routes)}/{attempted} route(s) verified, "
+            "the batch only uses routes that passed the OpenAI boundary check"
         )
         return successful_routes[0][1]
     raise RuntimeError(
@@ -336,7 +338,7 @@ def check_registered_promotions(emails, workers=4, proxy=None, timeout=20, proxy
         if not isinstance(item, dict):
             continue
         email = str(item.get("email") or "").strip()
-        label = str(item.get("promotion_status") or "检测失败").strip()
+        label = str(item.get("promotion_status") or "Check failed").strip()
         eligibility = str(item.get("payment_eligibility") or "").strip()
         if eligibility:
             label = f"{label} · {eligibility}" if label else eligibility

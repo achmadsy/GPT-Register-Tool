@@ -1373,7 +1373,7 @@ def _upi_setup_intent_last_error(payload: Any, current_pm_id: str = "") -> str:
 
 #: 参考实现 ``provider_decline_message`` 的中文前导。命中即视为 Stripe 风控拒绝,
 #: 该 checkout 已不可用（换代理重试同一 cs_id 也没意义）。
-UPI_PROVIDER_DECLINE_MARKER = "Stripe 风控拒绝"
+UPI_PROVIDER_DECLINE_MARKER = "Stripe risk decline"
 
 
 def _upi_is_provider_decline_text(text: Any) -> bool:
@@ -1382,7 +1382,7 @@ def _upi_is_provider_decline_text(text: Any) -> bool:
 
 
 def _upi_provider_decline_message(context: str) -> str:
-    return f"{UPI_PROVIDER_DECLINE_MARKER}: {context} setup_intent.last_setup_error 命中 generic_decline"
+    return f"{UPI_PROVIDER_DECLINE_MARKER}: {context} setup_intent.last_setup_error hit generic_decline"
 
 
 def _upi_raise_if_setup_intent_blocked(payload: Any, context: str, current_pm_id: str = "") -> None:

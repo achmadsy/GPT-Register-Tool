@@ -51,7 +51,7 @@ class AccountScanTests(unittest.TestCase):
                 "oauth": {"ok": True},
             }
         )
-        self.assertEqual(overview["at_status"], "AT失效已刷新")
+        self.assertEqual(overview["at_status"], "AT invalid, refreshed")
 
     def test_overview_does_not_treat_negative_dropped_label_as_truthy(self):
         overview = account_scan._scan_overview(
@@ -61,7 +61,7 @@ class AccountScanTests(unittest.TestCase):
                 "dropped": "否",
             }
         )
-        self.assertEqual(overview["dropped"], "否")
+        self.assertEqual(overview["dropped"], "No")
 
     def test_subscription_type_prefers_explicit_plan_type(self):
         self.assertEqual(account_scan._subscription_type({"plan_type": "plus"}), "plus")

@@ -238,7 +238,7 @@ def _run_protocol_script(spec: PaymentMethodSpec, access_token: str, proxy: Any 
                 "status": "completed",
                 "operation": "execute_payment",
                 "link_type": "blik_protocol_completed",
-                "message": completion.get("message") or "BLIK 自动提交完成",
+                "message": completion.get("message") or "BLIK auto-submit completed",
             }
     return {
         "ok": False,
